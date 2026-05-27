@@ -766,6 +766,33 @@ button{cursor:pointer;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--panel2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+
+/* ── ENTRY DETAIL / EDIT SCREENS ── */
+.entry-row{cursor:pointer;}
+.entry-row:active{transform:translateY(1px);}
+.entry-detail-grid{
+  background:var(--panel2);border:1px solid var(--bsoft);border-radius:var(--r);
+  padding:10px;display:flex;flex-direction:column;gap:3px;
+}
+.detail-row{
+  display:grid;grid-template-columns:110px 1fr;gap:10px;
+  padding:7px 2px;border-bottom:1px dashed var(--bsoft);font-size:11px;align-items:start;
+}
+.detail-row:last-child{border-bottom:none;}
+.detail-k{color:var(--muted);letter-spacing:1.6px;font-size:9px;padding-top:2px;}
+.detail-v{font-family:var(--disp);color:var(--text);word-break:break-word;}
+.detail-v.hi{color:var(--lcd);font-weight:700;}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.detail-actions .key{flex:1;min-width:110px;}
+.detail-danger{border:2px solid var(--danger)!important;}
+.entry-wrap{position:relative;overflow:visible;border-radius:var(--r);}
+.entry-wrap .entry-row{position:relative;z-index:1;margin:0;}
+.entry-actions,.entry-menu-btn,#entry-action-popover{display:none!important;}
+@media(max-width:600px){
+  .detail-row{grid-template-columns:86px 1fr;}
+}
+
 </style>
 </head>
 <body>
@@ -1039,6 +1066,47 @@ button{cursor:pointer;}
       </div>
       <div class="log-list" id="mod-screen-list"></div>
     </section>
+  </div>
+</div>
+
+<!-- ENTRY DETAIL SCREEN -->
+<div class="screen" id="screen-detail">
+  <div class="app-inner">
+    <div class="module-screen-header">
+      <button class="module-screen-back" id="btn-back-detail">← VOLVER</button>
+      <div class="module-screen-icon" id="detail-screen-icon"></div>
+      <div style="flex:1;overflow:hidden;">
+        <div class="module-screen-title" id="detail-screen-title">REGISTRO</div>
+        <div class="module-screen-count" id="detail-screen-sub">DETALLE</div>
+      </div>
+    </div>
+    <section class="panel" id="detail-panel">
+      <div class="panel-head">
+        <span class="panel-title">DETALLE DE REGISTRO</span>
+        <span class="panel-sub" id="detail-status">--</span>
+      </div>
+      <div class="entry-detail-grid" id="entry-detail-grid"></div>
+      <div class="detail-actions">
+        <button class="key key-green" id="btn-detail-edit">EDITAR</button>
+        <button class="key key-red" id="btn-detail-delete">BORRAR</button>
+        <button class="key" id="btn-detail-back-2">VOLVER</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ENTRY EDIT SCREEN -->
+<div class="screen" id="screen-edit">
+  <div class="app-inner">
+    <div class="module-screen-header">
+      <button class="module-screen-back" id="btn-back-edit">← CANCELAR</button>
+      <div class="module-screen-icon" id="edit-screen-icon">✎</div>
+      <div style="flex:1;overflow:hidden;">
+        <div class="module-screen-title">EDITANDO REGISTRO</div>
+        <div class="module-screen-count" id="edit-screen-sub">MODIFICA Y GUARDA</div>
+      </div>
+    </div>
+    <div id="edit-screen-slot"></div>
   </div>
 </div>
 
@@ -1454,7 +1522,9 @@ const AppState = {
   pendingEditId:null,   /* legacy — kept for compatibility */
   editingEntryId:null,  /* id of entry currently in edit panel */
   editingEntryOriginal:null, /* snapshot before edits */
-  currentScreen:'home'  /* 'home' | module key */
+  currentScreen:'home',  /* 'home' | module key | 'entryDetail' | 'entryEdit' */
+  selectedEntryId:null,
+  previousScreen:'home'
 };
 
 /* ─── UTILS ─── */
@@ -2402,30 +2472,27 @@ function openEntryActions(entryId, triggerEl){
   },0);
 }
 
-/* confirmDeleteEntry(entryId) — show inline confirm overlay */
+/* confirmDeleteEntry(entryId) — simple native confirmation from detail/list screens */
 function confirmDeleteEntry(entryId){
   closeEntryActions();
-  const wrap=document.querySelector('[data-entry-id="'+entryId+'"]');
-  if(!wrap) return;
-  /* remove any existing confirm */
-  const existing=wrap.querySelector('.delete-confirm');
-  if(existing){existing.remove();return;}
-  const ov=document.createElement('div');
-  ov.className='delete-confirm';
-  ov.innerHTML='<span class="delete-confirm-msg">¿ELIMINAR ESTE REGISTRO?</span>'
-    +'<button class="delete-confirm-cancel">CANCELAR</button>'
-    +'<button class="delete-confirm-ok">ELIMINAR</button>';
-  ov.querySelector('.delete-confirm-cancel').addEventListener('click',()=>{ov.remove();});
-  ov.querySelector('.delete-confirm-ok').addEventListener('click',()=>deleteEntry(entryId));
-  wrap.appendChild(ov);
+  const entry=AppState.entries.find(e=>e.id===entryId);
+  if(!entry){showToast('REGISTRO NO ENCONTRADO','td');return;}
+  if(!canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
+  if(window.confirm('¿Eliminar este registro?')) deleteEntry(entryId);
 }
 
 /* deleteEntry(entryId) — remove from AppState, recalculate, re-render */
 function deleteEntry(entryId){
+  const entry=AppState.entries.find(e=>e.id===entryId);
+  if(entry && !canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
   AppState.entries=AppState.entries.filter(e=>e.id!==entryId);
   saveEntries();
   recalculateBudgetsFromEntries();
+  const target=AppState.previousScreen||'home';
+  AppState.selectedEntryId=null;
+  AppState.editingEntryId=null;
   renderCurrentScreen();
+  navigateToScreen(target);
   showToast('REGISTRO ELIMINADO');
 }
 
@@ -2438,37 +2505,29 @@ function startEditEntry(entryId){
   if(!entry){showToast('REGISTRO NO ENCONTRADO','td');return;}
   if(!canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
 
-  /* Cancel any active intake */
   if(AppState.pendingEntry) cancelPendingEntry();
-
-  /* Snapshot original for cancel */
+  AppState.selectedEntryId=entryId;
+  if(AppState.currentScreen!=='entryDetail' && AppState.currentScreen!=='entryEdit'){
+    AppState.previousScreen=AppState.currentScreen||'home';
+  }
   AppState.editingEntryId=entryId;
   AppState.editingEntryOriginal=JSON.parse(JSON.stringify(entry));
 
-  /* Populate edit panel fields */
-  const md=entry.metadata||{};
-  q('edit-entry-id').textContent='ID: '+entryId;
-  q('edit-title').value=entry.title||'';
-  q('edit-module').value=entry.module||'gastos';
-  q('edit-amount').value=entry.amount!=null?entry.amount:'';
-  q('edit-category').value=md.category||'general-exp';
+  populateEditFields(entry);
+  navigateToScreen('entryEdit');
+}
 
-  /* Show/hide fin section */
+function populateEditFields(entry){
+  const md=entry.metadata||{};
+  if(q('edit-entry-id')) q('edit-entry-id').textContent='ID: '+entry.id;
+  if(q('edit-title')) q('edit-title').value=entry.title||'';
+  if(q('edit-module')) q('edit-module').value=entry.module||'gastos';
+  if(q('edit-amount')) q('edit-amount').value=entry.amount!=null?entry.amount:'';
+  if(q('edit-category')) q('edit-category').value=md.category||'general-exp';
   const isF=isFinancialEntry(entry);
   const finSec=q('edit-fin-section');
   if(finSec) finSec.style.display=isF?'':'none';
-
-  /* Scope / owner / status pickers */
   renderEditPickers(md.financialScope||'shared', md.owner||'shared', md.financialStatus||'confirmed');
-
-  /* Show panel, scroll to it */
-  const panel=q('edit-panel');
-  if(panel){
-    panel.classList.remove('hidden');
-    panel.style.borderColor='var(--warn)';
-    setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),50);
-  }
-  showToast('EDITANDO · MODIFICA Y GUARDA');
 }
 
 /* Backwards compat alias — editEntry now calls startEditEntry */
@@ -2482,6 +2541,7 @@ function renderEditPickers(scope, owner, status){
     [{k:'personal',l:'PERSONAL'},{k:'shared',l:'COMÚN'}].forEach(opt=>{
       const b=document.createElement('button');
       b.className='fin-opt'+(scope===opt.k?' selected':'');
+      b.dataset.k=opt.k;
       b.textContent=opt.l;
       b.addEventListener('click',()=>{
         const newScope=opt.k;
@@ -2499,6 +2559,7 @@ function renderEditPickers(scope, owner, status){
     AppState.users.forEach(u=>{
       const b=document.createElement('button');
       b.className='fin-opt'+(owner===u.id?' selected':'')+(isShared?' muted':'');
+      b.dataset.k=u.id;
       b.textContent=u.name.toUpperCase();
       b.disabled=isShared;
       b.addEventListener('click',()=>{if(!isShared)renderEditPickers(scope,u.id,status);});
@@ -2506,6 +2567,7 @@ function renderEditPickers(scope, owner, status){
     });
     const bs=document.createElement('button');
     bs.className='fin-opt'+(owner==='shared'?' selected':'');
+    bs.dataset.k='shared';
     bs.textContent='COMÚN';
     bs.addEventListener('click',()=>renderEditPickers('shared','shared',status));
     oo.appendChild(bs);
@@ -2517,6 +2579,7 @@ function renderEditPickers(scope, owner, status){
     [{k:'confirmed',l:'CONFIRMADO',w:false},{k:'planned',l:'PLANIFICADO',w:true}].forEach(opt=>{
       const b=document.createElement('button');
       b.className='fin-opt'+(opt.w?' warn':'')+(status===opt.k?' selected':'');
+      b.dataset.k=opt.k;
       b.textContent=opt.l;
       b.addEventListener('click',()=>renderEditPickers(scope,owner,opt.k));
       sto.appendChild(b);
@@ -2544,9 +2607,9 @@ function saveEditedEntry(){
   const selScope=q('edit-scope-opts').querySelector('.fin-opt.selected');
   const selOwner=q('edit-owner-opts').querySelector('.fin-opt.selected');
   const selStatus=q('edit-status-opts').querySelector('.fin-opt.selected');
-  const newScope=selScope?selScope.dataset.k||(selScope.textContent==='COMÚN'?'shared':'personal'):(entry.metadata||{}).financialScope||'shared';
-  const newOwner=selOwner?(selOwner.textContent==='COMÚN'?'shared':selOwner.textContent.toLowerCase()):(entry.metadata||{}).owner||'shared';
-  const newStatus=selStatus?(selStatus.textContent==='PLANIFICADO'?'planned':'confirmed'):(entry.metadata||{}).financialStatus||'confirmed';
+  const newScope=selScope?selScope.dataset.k:(entry.metadata||{}).financialScope||'shared';
+  const newOwner=selOwner?selOwner.dataset.k:(entry.metadata||{}).owner||'shared';
+  const newStatus=selStatus?selStatus.dataset.k:(entry.metadata||{}).financialStatus||'confirmed';
 
   /* Apply updates */
   entry.title=newTitle;
@@ -2563,8 +2626,11 @@ function saveEditedEntry(){
   AppState.entries[idx]=entry;
   saveEntries();
   recalculateBudgetsFromEntries();
-  cancelEditEntry();
-  renderCurrentScreen();
+  AppState.selectedEntryId=entryId;
+  AppState.editingEntryId=null;
+  AppState.editingEntryOriginal=null;
+  const panel=q('edit-panel'); if(panel) panel.classList.add('hidden');
+  navigateToScreen('entryDetail');
   showToast('REGISTRO ACTUALIZADO · '+newTitle.slice(0,20));
 }
 
@@ -2574,35 +2640,14 @@ function cancelEditEntry(){
   AppState.editingEntryOriginal=null;
   const panel=q('edit-panel');
   if(panel) panel.classList.add('hidden');
+  if(AppState.selectedEntryId) navigateToScreen('entryDetail');
+  else navigateToScreen(AppState.previousScreen||'home');
 }
 
 
 /* attachSwipeHandlers — wire touch swipe on all .entry-wrap elements in list */
 function attachSwipeHandlers(list){
-  list.querySelectorAll('.entry-wrap').forEach(wrap=>{
-    let startX=0,startY=0,moved=false;
-    wrap.addEventListener('touchstart',e=>{
-      startX=e.touches[0].clientX;startY=e.touches[0].clientY;moved=false;
-    },{passive:true});
-    wrap.addEventListener('touchmove',e=>{
-      const dx=startX-e.touches[0].clientX;
-      const dy=Math.abs(e.touches[0].clientY-startY);
-      if(dy>dx) return; /* vertical scroll — ignore */
-      if(dx>12) moved=true;
-    },{passive:true});
-    wrap.addEventListener('touchend',e=>{
-      if(!moved) return;
-      const dx=startX-e.changedTouches[0].clientX;
-      const entryId=wrap.getAttribute('data-entry-id');
-      if(dx>40){
-        /* swipe left → open popover anchored to the wrap's right edge */
-        const menuBtn=wrap.querySelector('.entry-menu-btn');
-        openEntryActions(entryId, menuBtn);
-      } else if(dx<-40){
-        closeEntryActions();
-      }
-    },{passive:true});
-  });
+  /* Disabled in favour of stable flow: tap row → detail → edit/delete. */
 }
 
 
@@ -2629,20 +2674,11 @@ function buildEntryRow(e){
   wrap.className='entry-wrap';
   wrap.setAttribute('data-entry-id',e.id);
 
-  /* Actions panel */
-  const acts=document.createElement('div');acts.className='entry-actions';
-  const btnEdit=document.createElement('button');btnEdit.className='entry-act-edit';
-  btnEdit.innerHTML='✎<span>EDITAR</span>';
-  btnEdit.setAttribute('aria-label','Editar registro');
-  btnEdit.addEventListener('click',()=>startEditEntry(e.id));
-  const btnDel=document.createElement('button');btnDel.className='entry-act-del';
-  btnDel.innerHTML='✕<span>BORRAR</span>';
-  btnDel.setAttribute('aria-label','Borrar registro');
-  btnDel.addEventListener('click',()=>confirmDeleteEntry(e.id));
-  acts.appendChild(btnEdit);acts.appendChild(btnDel);
-
   const row=document.createElement('div');row.className='entry-row';
   row.style.cssText='--entry-color:'+color+';';
+  row.setAttribute('role','button');
+  row.setAttribute('tabindex','0');
+  row.setAttribute('aria-label','Abrir detalle de '+(e.title||'registro'));
   row.innerHTML='<div class="entry-bar" aria-hidden="true"></div>'
     +'<div class="entry-time">'+fmtTime(e.createdAt)+'</div>'
     +'<div class="entry-body">'
@@ -2655,20 +2691,12 @@ function buildEntryRow(e){
         +(nfcTag?'<span class="entry-nfc">'+esc(nfcTag)+'</span>':'')
       +'</div>'
     +'</div>'
-    +'<div class="entry-right" style="display:flex;align-items:center;gap:4px;">'
+    +'<div class="entry-right">'
       +'<span class="status-badge '+sl.cls+'">'+sl.lbl+'</span>'
-      +'<button class="entry-menu-btn" aria-label="Acciones" title="Acciones">···</button>'
     +'</div>';
 
-  row.querySelector('.entry-menu-btn').addEventListener('click',ev=>{
-    ev.stopPropagation();
-    openEntryActions(e.id, ev.currentTarget);
-  });
-  row.addEventListener('click',ev=>{
-    if(wrap.classList.contains('swiped')){ev.stopPropagation();closeEntryActions();}
-  });
-
-  wrap.appendChild(acts);
+  row.addEventListener('click',()=>openEntryDetail(e.id));
+  row.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openEntryDetail(e.id);}});
   wrap.appendChild(row);
   return wrap;
 }
@@ -2985,20 +3013,94 @@ function applyAdminGating(){
 }
 
 
+
+/* ─── ENTRY DETAIL / EDIT SCREENS ─── */
+function getEntryById(entryId){return AppState.entries.find(e=>e.id===entryId)||null;}
+function getUserName(id){const u=(AppState.users||[]).find(x=>x.id===id);return u?u.name:id;}
+function openEntryDetail(entryId){
+  closeEntryActions();
+  const entry=getEntryById(entryId);
+  if(!entry){showToast('REGISTRO NO ENCONTRADO','td');return;}
+  if(!canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
+  if(AppState.currentScreen!=='entryDetail' && AppState.currentScreen!=='entryEdit'){
+    AppState.previousScreen=AppState.currentScreen||'home';
+  }
+  AppState.selectedEntryId=entryId;
+  navigateToScreen('entryDetail');
+}
+function detailLine(k,v,hi){
+  if(v==null||v==='') return '';
+  return '<div class="detail-row"><span class="detail-k">'+esc(k)+'</span><span class="detail-v '+(hi?'hi':'')+'">'+esc(v)+'</span></div>';
+}
+function renderEntryDetailScreen(){
+  const entry=getEntryById(AppState.selectedEntryId);
+  const grid=q('entry-detail-grid');
+  if(!entry||!canCurrentUserSeeEntry(entry)){
+    if(grid) grid.innerHTML='<div class="log-empty">— REGISTRO NO DISPONIBLE —</div>';
+    return;
+  }
+  const md=entry.metadata||{};
+  const mod=entry.module||'general';
+  const color=mod==='gastos'&&md.category?getCatColor(md.category):getModuleColor(mod);
+  const badge=mod==='gastos'&&md.category?getCatLabel(md.category):getModuleLabel(mod);
+  const sl=entryStatusLabel(entry);
+  const icon=q('detail-screen-icon');
+  if(icon){icon.innerHTML=mkIcon((MODULES[mod]||MODULES.general).icon,color);icon.style.borderColor=color;}
+  const title=q('detail-screen-title');
+  if(title){title.textContent=entry.title||'REGISTRO';title.style.color=color;}
+  const sub=q('detail-screen-sub');if(sub)sub.textContent=getModuleLabel(mod)+' · '+fmtTime(entry.createdAt);
+  const st=q('detail-status');if(st)st.textContent=sl.lbl;
+  let html='';
+  html+=detailLine('TÍTULO',entry.title,true);
+  html+=detailLine('MÓDULO',getModuleLabel(mod));
+  html+=detailLine('CATEGORÍA',badge);
+  if(entry.amount!=null) html+=detailLine('IMPORTE',entry.amount.toFixed(2)+' €',true);
+  if(md.movementType) html+=detailLine('MOVIMIENTO',md.movementType==='income'?'INGRESO':'GASTO');
+  if(md.financialScope) html+=detailLine('ÁMBITO',md.financialScope==='shared'?'COMÚN':'PERSONAL');
+  if(md.owner) html+=detailLine('PROPIETARIO',md.owner==='shared'?'COMÚN':(getUserName(md.owner)||md.owner));
+  if(md.financialStatus) html+=detailLine('ESTADO',sl.lbl);
+  html+=detailLine('FECHA',new Date(entry.createdAt).toLocaleString('es-ES'));
+  if(entry.raw) html+=detailLine('ENTRADA',entry.raw);
+  if(entry.location&&CONTEXTS[entry.location]) html+=detailLine('CONTEXTO',CONTEXTS[entry.location].name);
+  if(md.note) html+=detailLine('NOTA',md.note);
+  if(grid) grid.innerHTML=html||'<div class="log-empty">— SIN DETALLE —</div>';
+}
+function renderEntryEditScreen(){
+  const entry=getEntryById(AppState.selectedEntryId||AppState.editingEntryId);
+  const slot=q('edit-screen-slot');
+  const panel=q('edit-panel');
+  if(slot&&panel&&!slot.contains(panel)) slot.appendChild(panel);
+  if(panel) panel.classList.remove('hidden');
+  if(entry){
+    AppState.editingEntryId=entry.id;
+    if(!AppState.editingEntryOriginal) AppState.editingEntryOriginal=JSON.parse(JSON.stringify(entry));
+    populateEditFields(entry);
+  }
+}
+function backFromDetail(){navigateToScreen(AppState.previousScreen||'home');}
+
 /* ─── SCREEN NAVIGATION ─── */
 
 function navigateToScreen(screen){
   closeEntryActions();
   AppState.currentScreen=screen;
-  /* Show/hide top-level screens */
-  const homeScreen=document.getElementById('screen-home');
-  const modScreen=document.getElementById('screen-module');
+  const homeScreen=q('screen-home');
+  const modScreen=q('screen-module');
+  const detailScreen=q('screen-detail');
+  const editScreen=q('screen-edit');
+  [homeScreen,modScreen,detailScreen,editScreen].forEach(sc=>{if(sc){sc.classList.remove('active');sc.style.display='none';}});
   if(screen==='home'){
     if(homeScreen){homeScreen.classList.add('active');homeScreen.style.display='';}
-    if(modScreen){modScreen.classList.remove('active');modScreen.style.display='none';}
     renderAll();
+  } else if(screen==='entryDetail'){
+    if(detailScreen){detailScreen.classList.add('active');detailScreen.style.display='';}
+    renderEntryDetailScreen();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else if(screen==='entryEdit'){
+    if(editScreen){editScreen.classList.add('active');editScreen.style.display='';}
+    renderEntryEditScreen();
+    window.scrollTo({top:0,behavior:'smooth'});
   } else {
-    if(homeScreen){homeScreen.classList.remove('active');homeScreen.style.display='none';}
     if(modScreen){modScreen.classList.add('active');modScreen.style.display='';}
     renderModuleScreen(screen);
   }
@@ -3123,6 +3225,8 @@ function renderModuleScreen(key){
 
 function renderCurrentScreen(){
   if(AppState.currentScreen==='home') renderAll();
+  else if(AppState.currentScreen==='entryDetail') renderEntryDetailScreen();
+  else if(AppState.currentScreen==='entryEdit') renderEntryEditScreen();
   else renderModuleScreen(AppState.currentScreen);
 }
 
@@ -3216,6 +3320,11 @@ function wireEvents(){
   q('btn-save-edit').addEventListener('click',saveEditedEntry);
   q('btn-cancel-edit').addEventListener('click',cancelEditEntry);
   const backBtn=q('btn-back-module');if(backBtn)backBtn.addEventListener('click',()=>navigateToScreen('home'));
+  const bd=q('btn-back-detail');if(bd)bd.addEventListener('click',backFromDetail);
+  const bd2=q('btn-detail-back-2');if(bd2)bd2.addEventListener('click',backFromDetail);
+  const de=q('btn-detail-edit');if(de)de.addEventListener('click',()=>{if(AppState.selectedEntryId)startEditEntry(AppState.selectedEntryId);});
+  const dd=q('btn-detail-delete');if(dd)dd.addEventListener('click',()=>{if(AppState.selectedEntryId)confirmDeleteEntry(AppState.selectedEntryId);});
+  const be=q('btn-back-edit');if(be)be.addEventListener('click',cancelEditEntry);
 }
 
 /* ─── INIT ─── */

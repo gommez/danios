@@ -9,7 +9,7 @@
 <title>DANI OS</title>
 <style>
 /* ================================================
-   DANI OS · v0.6 · LIGHT MODE + EXPENSE ENGINE
+   DANI OS · v0.7 · LIGHT MODE + MULTI-USER + BUDGETS
    ================================================ */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -471,6 +471,146 @@ button{cursor:pointer;}
   .dashboard-grid{grid-template-columns:repeat(3,1fr);}
 }
 
+/* ── USER SWITCHER (topbar) ── */
+.user-switcher{
+  display:flex;align-items:center;gap:4px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:var(--r);padding:3px;
+}
+.user-pill{
+  background:transparent;border:none;color:var(--muted);
+  font-family:var(--disp);font-size:10px;letter-spacing:1.5px;
+  padding:5px 9px;border-radius:3px;transition:background .1s,color .1s;
+  position:relative;
+}
+.user-pill:hover{color:var(--text);}
+.user-pill.active{background:var(--user-color,var(--lcd));color:var(--panel);font-weight:700;}
+.user-pill .urole{
+  font-size:7px;letter-spacing:1px;display:block;opacity:.7;line-height:1;margin-top:1px;
+}
+.local-warn{
+  font-size:8px;letter-spacing:1.5px;color:var(--warn);
+  background:var(--panel2);border:1px dashed var(--warn);border-radius:var(--r);
+  padding:4px 8px;text-align:center;margin-top:4px;
+}
+
+/* ── VIEW SELECTOR ── */
+.view-switcher{
+  display:flex;gap:5px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:var(--r);padding:3px;margin-bottom:8px;
+}
+.view-pill{
+  flex:1;background:transparent;border:none;color:var(--muted);
+  font-family:var(--disp);font-size:10px;letter-spacing:2px;
+  padding:6px 8px;border-radius:3px;transition:background .1s,color .1s;
+}
+.view-pill:hover{color:var(--text);}
+.view-pill.active{background:var(--lcd);color:var(--panel);font-weight:700;}
+.view-pill.admin-only{border:1px dashed var(--warn);color:var(--warn);}
+.view-pill.admin-only.active{background:var(--warn);color:var(--panel);border-style:solid;}
+
+/* ── SCOPE / OWNER / STATUS PICKERS (in interpret panel) ── */
+.fin-pickers{
+  background:var(--panel2);border:1px solid var(--bsoft);border-radius:var(--r);
+  padding:9px;display:flex;flex-direction:column;gap:8px;margin-bottom:9px;
+}
+.fin-row{
+  display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;
+  font-size:10px;
+}
+.fin-k{color:var(--muted);letter-spacing:1.5px;font-size:9px;}
+.fin-opts{display:flex;gap:4px;flex-wrap:wrap;}
+.fin-opt{
+  background:var(--panel);border:1px solid var(--border);
+  color:var(--text-soft);font-family:var(--disp);font-size:10px;
+  letter-spacing:1px;padding:5px 9px;border-radius:3px;
+  transition:border-color .1s,background .1s,color .1s;
+}
+.fin-opt:hover{border-color:var(--lcd);}
+.fin-opt.selected{
+  background:var(--lcd);border-color:var(--lcd);color:var(--panel);font-weight:700;
+}
+.fin-opt.warn.selected{background:var(--warn);border-color:var(--warn);}
+.fin-opt.muted{opacity:.6;}
+
+/* ── FINANZAS PANEL ── */
+.budget-list{display:flex;flex-direction:column;gap:6px;}
+.budget-row{
+  background:var(--panel2);border:1px solid var(--bsoft);
+  border-left:3px solid var(--budget-color,var(--lcd));
+  border-radius:var(--r);padding:8px 10px;
+}
+.budget-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:5px;gap:8px;flex-wrap:wrap;
+}
+.budget-name{
+  font-family:var(--disp);font-size:11px;letter-spacing:1.5px;color:var(--text);
+}
+.budget-scope-tag{
+  font-size:7px;letter-spacing:1.5px;padding:1px 5px;border-radius:2px;
+  border:1px solid var(--muted);color:var(--muted);font-family:var(--disp);
+}
+.budget-scope-tag.shared{border-color:var(--color-ingresos);color:var(--color-ingresos);}
+.budget-scope-tag.personal{border-color:var(--color-ocio);color:var(--color-ocio);}
+.budget-amounts{
+  font-family:var(--disp);font-size:10px;color:var(--muted);
+}
+.budget-amounts strong{color:var(--text);font-weight:700;}
+.budget-bar-wrap{
+  height:6px;background:var(--panel3);border-radius:3px;
+  overflow:hidden;position:relative;margin-top:4px;
+}
+.budget-bar-confirmed{
+  position:absolute;left:0;top:0;bottom:0;
+  background:var(--budget-color,var(--lcd));
+  transition:width .25s;
+}
+.budget-bar-planned{
+  position:absolute;top:0;bottom:0;
+  background:var(--budget-color,var(--lcd));
+  opacity:.35;
+  transition:width .25s,left .25s;
+}
+.budget-bar-over{background:var(--danger)!important;}
+.budget-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+  margin-top:5px;font-size:9px;
+}
+.budget-stat{display:flex;flex-direction:column;}
+.budget-stat-k{color:var(--muted);font-size:7px;letter-spacing:1px;}
+.budget-stat-v{font-family:var(--disp);color:var(--text);font-size:10px;font-weight:600;}
+.budget-stat-v.planned{color:var(--warn);}
+.budget-stat-v.danger{color:var(--danger);}
+
+.budget-empty{
+  text-align:center;color:var(--muted);font-size:10px;
+  letter-spacing:1.5px;padding:14px;
+}
+
+/* ── BIOMETRIC PLACEHOLDER ── */
+.biom-box{
+  background:var(--panel2);border:1px dashed var(--border);
+  border-radius:var(--r);padding:11px;display:flex;flex-direction:column;gap:7px;
+}
+.biom-txt{font-size:10px;color:var(--muted);line-height:1.5;}
+.biom-disabled-btn{
+  background:var(--panel3);border:1px solid var(--border);
+  color:var(--muted);font-family:var(--disp);font-size:10px;letter-spacing:2px;
+  padding:8px 12px;border-radius:var(--r);cursor:not-allowed;
+  align-self:flex-start;opacity:.7;
+}
+.biom-disabled-btn::after{
+  content:' · PRÓXIMA FASE';color:var(--warn);font-size:8px;letter-spacing:1px;
+}
+
+@media(max-width:600px){
+  .user-switcher{padding:2px;}
+  .user-pill{padding:4px 7px;font-size:9px;}
+  .view-pill{font-size:9px;letter-spacing:1px;padding:5px 4px;}
+  .fin-row{grid-template-columns:70px 1fr;}
+  .budget-stats{grid-template-columns:repeat(2,1fr);}
+}
+
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--panel2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -486,6 +626,7 @@ button{cursor:pointer;}
       <div class="brand-title">DANI&nbsp;OS</div>
     </div>
     <div class="topbar-right">
+      <div class="user-switcher" id="user-switcher" title="Cambiar usuario · modo local"></div>
       <div class="infobox">
         <span class="infobox-lbl">DATE</span>
         <span class="infobox-val" id="top-date">--</span>
@@ -501,6 +642,8 @@ button{cursor:pointer;}
       <button class="icon-btn" id="btn-settings" title="Config / NFC">⚙</button>
     </div>
   </header>
+  <!-- LOCAL MODE WARNING -->
+  <div class="local-warn" id="local-warn">⚠ MODO LOCAL · NO ES AUTENTICACIÓN REAL · FILTRO DE INTERFAZ</div>
 
   <!-- NFC CONTEXT BANNER -->
   <div id="ctx-banner" class="hidden">
@@ -568,6 +711,21 @@ button{cursor:pointer;}
         <span class="ipt-v" id="i-dat">--</span>
       </div>
     </div>
+    <!-- Financial pickers (shown when entry has amount) -->
+    <div class="fin-pickers hidden" id="fin-pickers">
+      <div class="fin-row">
+        <span class="fin-k">ÁMBITO</span>
+        <div class="fin-opts" id="fin-scope-opts"></div>
+      </div>
+      <div class="fin-row">
+        <span class="fin-k">PROPIETARIO</span>
+        <div class="fin-opts" id="fin-owner-opts"></div>
+      </div>
+      <div class="fin-row">
+        <span class="fin-k">ESTADO</span>
+        <div class="fin-opts" id="fin-status-opts"></div>
+      </div>
+    </div>
     <!-- Expense category selector (shown when ambiguous) -->
     <div class="expense-selector hidden" id="expense-selector">
       <div class="expense-selector-title">Revisa la imputación antes de guardar</div>
@@ -580,6 +738,9 @@ button{cursor:pointer;}
     </div>
   </section>
 
+  <!-- VIEW SELECTOR (Mi vista / Común / Admin) -->
+  <div class="view-switcher" id="view-switcher"></div>
+
   <!-- TODAY -->
   <section class="panel" id="section-today">
     <div class="panel-head">
@@ -588,6 +749,15 @@ button{cursor:pointer;}
     </div>
     <div class="metric-grid" id="today-stats"></div>
     <div id="pulse-wrap"></div>
+  </section>
+
+  <!-- FINANZAS -->
+  <section class="panel" id="section-finanzas">
+    <div class="panel-head">
+      <span class="panel-title">FINANZAS</span>
+      <span class="panel-sub" id="fin-sub">PRESUPUESTOS DEL MES</span>
+    </div>
+    <div class="budget-list" id="budget-list"></div>
   </section>
 
   <!-- MÓDULOS -->
@@ -609,7 +779,7 @@ button{cursor:pointer;}
   </section>
 
   <footer id="footer">
-    <span>DANI OS v0.6</span>
+    <span>DANI OS v0.7</span>
     <span id="foot-dev">DEVICE: --</span>
     <span id="foot-n">ENTRIES: 0</span>
   </footer>
@@ -656,6 +826,25 @@ button{cursor:pointer;}
       <div class="section-lbl">URLS PARA ETIQUETAS NFC</div>
       <div id="nfc-list"></div>
     </div>
+    <div id="set-admin-section">
+      <div class="section-lbl">USUARIOS</div>
+      <div class="kv-list" id="users-list"></div>
+    </div>
+    <div id="set-rules-section">
+      <div class="section-lbl">REGLAS DE ACTIVIDAD</div>
+      <div class="kv-list" id="rules-list"></div>
+    </div>
+    <div>
+      <div class="section-lbl">ACCESO BIOMÉTRICO</div>
+      <div class="biom-box">
+        <div class="biom-txt">
+          Face ID real requiere autenticación con backend mediante Passkeys/WebAuthn.
+          En GitHub Pages esta beta solo usa perfiles locales. La fase segura se implementará con
+          Supabase Auth + Passkeys.
+        </div>
+        <button class="biom-disabled-btn" disabled>ACTIVAR FACE ID</button>
+      </div>
+    </div>
     <div>
       <div class="section-lbl">DATOS</div>
       <div class="settings-btns">
@@ -670,8 +859,9 @@ button{cursor:pointer;}
       <div class="kv-list">
         <div class="kv-row"><span class="kv-k">DEVICE</span><span class="kv-v" id="sys-dev">--</span></div>
         <div class="kv-row"><span class="kv-k">VOICE</span><span class="kv-v" id="sys-voice">--</span></div>
-        <div class="kv-row"><span class="kv-k">STORE</span><span class="kv-v">dani_os_entries</span></div>
+        <div class="kv-row"><span class="kv-k">STORES</span><span class="kv-v">entries · users · budgets · rules</span></div>
         <div class="kv-row"><span class="kv-k">ENTRIES</span><span class="kv-v" id="sys-n">0</span></div>
+        <div class="kv-row"><span class="kv-k">VERSION</span><span class="kv-v">v0.7 · multi-user beta</span></div>
       </div>
     </div>
   </div>
@@ -681,13 +871,67 @@ button{cursor:pointer;}
 
 <script>
 /* ================================================
-   DANI OS · v0.6 · EXPENSE ENGINE + LIGHT THEME
+   DANI OS · v0.7 · MULTI-USER + BUDGETS + LIGHT THEME
+   Includes: users (Dani/Patri), local session, financial
+   scope/owner, budgets with confirmed+planned tracking,
+   activity rules, view selector. Local-only — no real auth.
    ================================================ */
 (function(){
 'use strict';
 
 const STORE_KEY    = 'dani_os_entries';
 const THEME_KEY    = 'dani_os_theme';
+const USERS_KEY    = 'dani_os_users';
+const CURUSR_KEY   = 'dani_os_current_user';
+const BUDGETS_KEY  = 'dani_os_budgets';
+const RULES_KEY    = 'dani_os_activity_rules';
+const VIEW_KEY     = 'dani_os_current_view';
+
+/* ─────────────────────────────────────────────────────────────
+   MULTI-USER · FINANCIAL SCOPE · BUDGETS · ACTIVITY RULES
+   -----------------------------------------------------------
+   ESTA CAPA ES SIMULADA. No es autenticación real. Es un
+   filtro de interfaz que vive en localStorage. La fase
+   segura se hará con Supabase Auth + Passkeys/WebAuthn +
+   Row Level Security cuando exista backend.
+   ───────────────────────────────────────────────────────── */
+const DEFAULT_USERS = [
+  { id:'dani',  name:'Dani',  role:'admin', color:'#2563EB', active:true },
+  { id:'patri', name:'Patri', role:'user',  color:'#C026D3', active:true }
+];
+
+/* Seed budgets — created on first run if none exist */
+const DEFAULT_BUDGETS_SEED = [
+  { name:'Dani · Ocio personal',    category:'ocio',          scope:'personal', owner:'dani',   period:'monthly', limit:120 },
+  { name:'Patri · Ocio personal',   category:'ocio',          scope:'personal', owner:'patri',  period:'monthly', limit:120 },
+  { name:'Común · Alimentación',    category:'alimentacion',  scope:'shared',   owner:'shared', period:'monthly', limit:350 },
+  { name:'Común · Restauración',    category:'restauracion',  scope:'shared',   owner:'shared', period:'monthly', limit:180 },
+  { name:'Común · Mascotas',        category:'mascotas-exp',  scope:'shared',   owner:'shared', period:'monthly', limit:60  },
+  { name:'Común · Hogar y limpieza',category:'hogar-exp',     scope:'shared',   owner:'shared', period:'monthly', limit:120 }
+];
+
+/* Seed activity rules — created on first run if none exist */
+const DEFAULT_RULES_SEED = [
+  {
+    id:'padel_360',
+    name:'360 Padel Indoor',
+    keywords:['360 padel','360 padel indoor','padel 360','pádel 360'],
+    category:'ocio',
+    defaultAmount:9,
+    defaultScope:'personal',
+    defaultOwner:'dani',
+    financialStatus:'planned',
+    active:true
+  }
+];
+
+/* Map between expense categories (EXP_CATS keys) and budget categories.
+   Used to find matching budget when applying an entry. */
+function normalizeBudgetCategory(catKey){
+  /* If the entry category equals a budget seed category, use as-is.
+     Otherwise normalise common aliases. */
+  return catKey;
+}
 
 /* ─── SVG ICONS ─── */
 const ICONS={
@@ -800,7 +1044,8 @@ function getModuleLabel(m)  { return (MODULES[m]||{name:(m||'GEN').toUpperCase()
 function getModuleIcon(m)   { return (MODULES[m]||{icon:'general'}).icon; }
 
 function getModuleStats(m) {
-  const all = m==='dashboard' ? AppState.entries.slice() : AppState.entries.filter(e=>e.module===m);
+  const base = getVisibleEntries();
+  const all = m==='dashboard' ? base.slice() : base.filter(e=>e.module===m);
   const today = new Date().toISOString().slice(0,10);
   const todayN = all.filter(e=>(e.createdAt||'').slice(0,10)===today).length;
   const pending = all.filter(e=>e.status==='open').length;
@@ -810,24 +1055,26 @@ function getModuleStats(m) {
   return { all:all.length, todayN, pending, done, spent, last };
 }
 function getTodayStats() {
+  const visible = getVisibleEntries();
   const today = new Date().toISOString().slice(0,10);
-  const entries = AppState.entries.filter(e=>(e.createdAt||'').slice(0,10)===today);
-  const pending = AppState.entries.filter(e=>e.status==='open').length;
-  const done    = AppState.entries.filter(e=>e.status==='done').length;
-  const last    = AppState.entries.length ? AppState.entries[AppState.entries.length-1] : null;
+  const entries = visible.filter(e=>(e.createdAt||'').slice(0,10)===today);
+  const pending = visible.filter(e=>e.status==='open').length;
+  const done    = visible.filter(e=>e.status==='done').length;
+  const last    = visible.length ? visible[visible.length-1] : null;
   return { count:entries.length, pending, done, last };
 }
 function getHomePulse() {
-  const pending = AppState.entries.filter(e=>e.status==='open').length;
+  const visible = getVisibleEntries();
+  const pending = visible.filter(e=>e.status==='open').length;
   let state,label;
   if(pending<=2){state='calm';label='TRANQUILO';}
   else if(pending<=6){state='active';label='ACTIVO';}
   else{state='saturated';label='SATURADO';}
   const counts={};
-  AppState.entries.forEach(e=>{ counts[e.module]=(counts[e.module]||0)+1; });
+  visible.forEach(e=>{ counts[e.module]=(counts[e.module]||0)+1; });
   let topMod=null,topN=0;
   Object.keys(counts).forEach(m=>{if(counts[m]>topN){topMod=m;topN=counts[m];}});
-  const last = AppState.entries.length ? AppState.entries[AppState.entries.length-1] : null;
+  const last = visible.length ? visible[visible.length-1] : null;
   return {state,label,pending,topMod,last};
 }
 
@@ -932,6 +1179,17 @@ const INTENT_MAP = {
 const AppState = {
   entries:[],pendingEntry:null,
   pendingExpCat:null,       /* currently selected expense category in selector */
+  /* Multi-user / finance scaffolding */
+  users:[],
+  currentUser:'dani',       /* simulated session — NOT real auth */
+  currentView:'mine',       /* 'mine' | 'shared' | 'admin' (admin = solo dani) */
+  budgets:[],
+  activityRules:[],
+  /* Pending finance fields (edited via pickers in interpret panel) */
+  pendingScope:null,        /* 'personal' | 'shared' */
+  pendingOwner:null,        /* 'dani' | 'patri' | 'shared' */
+  pendingStatus:'confirmed',/* 'confirmed' | 'planned' */
+  /* Rest */
   currentContext:null,currentModule:'dashboard',
   voiceMode:'idle',isListening:false,recognition:null,
   lastTranscript:'',speechSupported:false,speechSynthesisSupported:false,
@@ -975,12 +1233,254 @@ function saveEntries(){
 }
 function clearEntries(){AppState.entries=[];saveEntries();}
 function exportEntries(){
-  const data={version:'0.6',exportedAt:now(),entries:AppState.entries};
+  const data={
+    version:'0.7',exportedAt:now(),
+    entries:AppState.entries,
+    users:AppState.users,
+    budgets:AppState.budgets,
+    activityRules:AppState.activityRules
+  };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='dani-os-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   showToast('EXPORTADO · '+AppState.entries.length+' ENTRADAS');
+}
+
+/* ─── USERS / VIEW / BUDGETS / RULES PERSISTENCE ─── */
+function loadUsers(){
+  try{
+    const r=localStorage.getItem(USERS_KEY);
+    const arr=r?JSON.parse(r):null;
+    AppState.users=(Array.isArray(arr)&&arr.length)?arr:DEFAULT_USERS.slice();
+  }catch(e){AppState.users=DEFAULT_USERS.slice();}
+  if(!localStorage.getItem(USERS_KEY)) saveUsers();
+}
+function saveUsers(){
+  try{localStorage.setItem(USERS_KEY,JSON.stringify(AppState.users));}catch(e){}
+}
+function loadCurrentUser(){
+  try{
+    const r=localStorage.getItem(CURUSR_KEY);
+    if(r && AppState.users.some(u=>u.id===r)) AppState.currentUser=r;
+    else AppState.currentUser='dani';
+  }catch(e){AppState.currentUser='dani';}
+}
+function saveCurrentUser(){
+  try{localStorage.setItem(CURUSR_KEY,AppState.currentUser);}catch(e){}
+}
+function loadView(){
+  try{
+    const r=localStorage.getItem(VIEW_KEY);
+    if(r==='mine'||r==='shared'||r==='admin') AppState.currentView=r;
+    else AppState.currentView='mine';
+  }catch(e){AppState.currentView='mine';}
+  /* Non-admin can't have admin view */
+  if(AppState.currentView==='admin' && !isCurrentUserAdmin()) AppState.currentView='mine';
+}
+function saveView(){
+  try{localStorage.setItem(VIEW_KEY,AppState.currentView);}catch(e){}
+}
+function loadBudgets(){
+  try{
+    const r=localStorage.getItem(BUDGETS_KEY);
+    const arr=r?JSON.parse(r):null;
+    if(Array.isArray(arr)&&arr.length){ AppState.budgets=arr; return; }
+  }catch(e){}
+  /* Seed defaults */
+  AppState.budgets=DEFAULT_BUDGETS_SEED.map(seed=>({
+    id:'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    name:seed.name,category:seed.category,scope:seed.scope,owner:seed.owner,
+    period:seed.period,limit:seed.limit,
+    spentConfirmed:0,spentPlanned:0,
+    availableConfirmed:seed.limit,availableProjected:seed.limit,
+    active:true,createdAt:now(),updatedAt:now()
+  }));
+  saveBudgets();
+}
+function saveBudgets(){
+  try{localStorage.setItem(BUDGETS_KEY,JSON.stringify(AppState.budgets));}catch(e){}
+}
+function loadActivityRules(){
+  try{
+    const r=localStorage.getItem(RULES_KEY);
+    const arr=r?JSON.parse(r):null;
+    if(Array.isArray(arr)){ AppState.activityRules=arr; return; }
+  }catch(e){}
+  AppState.activityRules=DEFAULT_RULES_SEED.slice();
+  saveActivityRules();
+}
+function saveActivityRules(){
+  try{localStorage.setItem(RULES_KEY,JSON.stringify(AppState.activityRules));}catch(e){}
+}
+
+/* ─── USER HELPERS ─── */
+function getCurrentUser(){
+  return AppState.users.find(u=>u.id===AppState.currentUser) || AppState.users[0] || DEFAULT_USERS[0];
+}
+function isCurrentUserAdmin(){
+  const u=getCurrentUser();
+  return !!(u && u.role==='admin');
+}
+function getUserById(id){
+  return AppState.users.find(u=>u.id===id) || null;
+}
+function getOtherUserId(){
+  const cu=AppState.currentUser;
+  const other=AppState.users.find(u=>u.id!==cu);
+  return other?other.id:null;
+}
+
+/* ─── ENTRY VISIBILITY ─────────────────────────────────────────
+   IMPORTANT: This is a LOCAL UI filter, not security. Anyone with
+   browser devtools can read all entries from localStorage. Real
+   security will come with Supabase Row Level Security + Auth.
+   ──────────────────────────────────────────────────────────── */
+function canCurrentUserSeeEntry(entry){
+  if(!entry) return false;
+  const md=entry.metadata||{};
+  /* Non-financial entries (no amount) follow module visibility:
+     they default to shared/visible to both, unless explicitly scoped. */
+  const isFinancial = entry.amount!=null;
+  const cu=AppState.currentUser;
+
+  /* Backward compat: entries without scope/visibleTo default to shared */
+  const scope = md.financialScope || (isFinancial ? 'shared' : 'shared');
+  const visibleTo = Array.isArray(md.visibleTo) && md.visibleTo.length
+    ? md.visibleTo
+    : ['dani','patri'];
+
+  if(scope==='shared') return true;
+  if(visibleTo.indexOf(cu)!==-1) return true;
+  return false;
+}
+
+/* getVisibleEntries — central filter respecting current user AND current view.
+   - 'mine'   → personal entries of current user + shared
+   - 'shared' → only shared entries
+   - 'admin'  → all entries (only available to admin)
+   ALL renders should call this, never AppState.entries directly. */
+function getVisibleEntries(opts){
+  opts = opts || {};
+  const view = opts.view || AppState.currentView;
+  const cu = AppState.currentUser;
+
+  return AppState.entries.filter(e=>{
+    const md=e.metadata||{};
+    const scope = md.financialScope || 'shared';
+    const owner = md.owner || 'shared';
+    const visibleTo = Array.isArray(md.visibleTo) && md.visibleTo.length
+      ? md.visibleTo
+      : ['dani','patri'];
+
+    if(view==='admin'){
+      /* Admin sees everything — UI must label things clearly */
+      return isCurrentUserAdmin();
+    }
+    if(view==='shared'){
+      return scope==='shared';
+    }
+    /* 'mine' view */
+    if(scope==='shared') return true;
+    if(visibleTo.indexOf(cu)!==-1) return true;
+    /* Even admin should NOT see Patri's personals in 'mine' view */
+    return false;
+  });
+}
+
+/* Migrate old entries that don't have financialScope/owner/visibleTo.
+   Strategy: keep them shared so nobody loses visibility on upgrade. */
+function migrateEntries(){
+  let changed=false;
+  AppState.entries.forEach(e=>{
+    if(!e.metadata) e.metadata={};
+    const md=e.metadata;
+    if(!md.financialScope){
+      md.financialScope='shared';
+      changed=true;
+    }
+    if(!md.owner){
+      md.owner='shared';
+      changed=true;
+    }
+    if(!Array.isArray(md.visibleTo) || !md.visibleTo.length){
+      md.visibleTo=['dani','patri'];
+      changed=true;
+    }
+    if(!md.financialStatus){
+      md.financialStatus = (e.amount!=null) ? 'confirmed' : 'confirmed';
+      changed=true;
+    }
+  });
+  if(changed) saveEntries();
+}
+
+/* ─── ACTIVITY RULES ─── */
+function matchActivityRule(rawInput){
+  const b=bare(rawInput);
+  return AppState.activityRules.find(r=>{
+    if(!r.active) return false;
+    return (r.keywords||[]).some(k=>b.indexOf(bare(k))!==-1);
+  }) || null;
+}
+
+/* Detect future-tense words → suggests planned status */
+function hasFutureMarker(rawInput){
+  const b=bare(rawInput);
+  return /\b(manana|mañana|el\s+(lunes|martes|miercoles|jueves|viernes|sabado|domingo)|lunes|martes|miercoles|jueves|viernes|sabado|domingo|proxim|prox\.|la\s+semana|el\s+mes\s+que)\b/.test(b)
+    || /\bjueves\b|\bsabado\b|\bsábado\b/.test(b);
+}
+
+/* ─── BUDGETS ─── */
+function suggestScopeFromCategory(catKey){
+  /* Common-by-default categories */
+  const commonCats = ['alimentacion','hogar-exp','limpieza-exp','mascotas-exp'];
+  /* Personal-by-default categories */
+  const personalCats = ['ocio','restauracion','salud','transporte'];
+  if(commonCats.indexOf(catKey)!==-1) return 'shared';
+  if(personalCats.indexOf(catKey)!==-1) return 'personal';
+  return 'personal';
+}
+
+function findMatchingBudget(entry){
+  const md=entry.metadata||{};
+  const cat=md.category;
+  if(!cat) return null;
+  const scope=md.financialScope || 'shared';
+  const owner=md.owner || 'shared';
+  return AppState.budgets.find(b=>
+    b.active && b.category===cat && b.scope===scope && b.owner===owner
+  ) || null;
+}
+
+function recomputeBudgetTotals(){
+  /* Reset all budget counters */
+  AppState.budgets.forEach(b=>{
+    b.spentConfirmed=0;
+    b.spentPlanned=0;
+  });
+  /* Iterate ALL entries (not filtered by user — totals are global). */
+  AppState.entries.forEach(e=>{
+    if(e.amount==null) return;
+    const md=e.metadata||{};
+    if(md.category==='ingresos') return; /* income doesn't reduce budget */
+    const b=findMatchingBudget(e);
+    if(!b) return;
+    const status = md.financialStatus || 'confirmed';
+    if(status==='planned') b.spentPlanned += e.amount;
+    else                   b.spentConfirmed += e.amount;
+  });
+  AppState.budgets.forEach(b=>{
+    b.availableConfirmed = b.limit - b.spentConfirmed;
+    b.availableProjected = b.limit - b.spentConfirmed - b.spentPlanned;
+    b.updatedAt=now();
+  });
+  saveBudgets();
+}
+
+function applyEntryToBudgets(entry){
+  /* Convenience — full recompute is safer than incremental */
+  recomputeBudgetTotals();
 }
 
 /* ─── UNIVERSAL INTAKE ─── */
@@ -990,14 +1490,26 @@ const UniversalIntake={
     const b=bare(raw);
     const ctx=payload.location||AppState.currentContext||null;
     const mHint=payload.moduleHint||(ctx&&CONTEXTS[ctx]?CONTEXTS[ctx].defMod:null);
-    const amount=this._extractAmount(raw);
+    let amount=this._extractAmount(raw);
     const di=this._extractDate(b);
 
-    /* KEY RULE: if amount detected, force module=gastos regardless of keywords */
+    /* Activity rule match — may suggest amount + category + scope + owner + status */
+    const rule=matchActivityRule(raw);
+    if(rule && amount===null && rule.defaultAmount!=null){
+      amount = rule.defaultAmount;
+    }
+
+    /* KEY RULE: if amount detected (or suggested by rule), force module=gastos
+       regardless of keywords */
     let mod, intent, expResult=null;
     if(amount!==null){
       mod='gastos';
       expResult=classifyExpense(raw);
+      /* Rule can override the auto-classified category */
+      if(rule && rule.category){
+        expResult.category = rule.category;
+        if(expResult.confidence==='low') expResult.confidence='medium';
+      }
       intent=expResult.intent;
     } else {
       const det=this._classify(b,mHint,ctx);
@@ -1007,21 +1519,54 @@ const UniversalIntake={
 
     const title=raw?raw.charAt(0).toUpperCase()+raw.slice(1,72)+(raw.length>72?'…':''):'(sin texto)';
 
+    /* ── Financial scope / owner / status defaults ─────────────────
+       These are SUGGESTIONS — the user can change them in the
+       interpretation panel before confirming. */
+    const cu = AppState.currentUser || 'dani';
+    let financialScope = null;
+    let owner = null;
+    let financialStatus = 'confirmed';
+
+    if(amount!==null){
+      /* Activity rule has highest priority */
+      if(rule){
+        financialScope = rule.defaultScope || suggestScopeFromCategory(expResult?expResult.category:null);
+        owner = rule.defaultOwner || cu;
+        financialStatus = rule.financialStatus || 'confirmed';
+      } else {
+        financialScope = suggestScopeFromCategory(expResult ? expResult.category : null);
+        owner = (financialScope==='shared') ? 'shared' : cu;
+        financialStatus = hasFutureMarker(raw) ? 'planned' : 'confirmed';
+      }
+      /* Future-tense always escalates to planned (rule or no rule) */
+      if(hasFutureMarker(raw) && financialStatus!=='planned') financialStatus='planned';
+    }
+
+    const visibleTo = (financialScope==='shared')
+      ? ['dani','patri']
+      : (owner ? [owner] : [cu]);
+
     const entry={
-      id:uid(),createdAt:payload.createdAt||now(),createdBy:payload.user||'default',
+      id:uid(),createdAt:payload.createdAt||now(),createdBy:payload.user||cu,
       rawInput:raw,inputType:payload.inputType||'text',source:payload.source||'manual',
       location:ctx,device:payload.device||AppState.device,
       module:mod,intent,title,description:raw,
       date:di.date,time:di.time,amount,status:'open',priority:'normal',
-      assignedTo:payload.user||'default',tags:[],
+      assignedTo:payload.user||cu,tags:[],
       metadata:{
         ctx,hint:mHint||null,
         category: expResult ? expResult.category : null,
         categoryConfidence: expResult ? expResult.confidence : null,
-        person: expResult ? expResult.person : null
+        person: expResult ? expResult.person : null,
+        /* NEW financial scope fields */
+        financialScope: financialScope,
+        owner: owner,
+        visibleTo: visibleTo,
+        financialStatus: financialStatus,
+        activityRule: rule ? rule.id : null
       }
     };
-    return {entry, expResult};
+    return {entry, expResult, rule};
   },
   _classify(b,hint,ctx){
     if(hint&&MODULES[hint])return{mod:hint,score:99};
@@ -1039,8 +1584,11 @@ const UniversalIntake={
     return{mod:best,score:bs};
   },
   _extractAmount(s){
-    /* Matches: "5,65€" "34.20" "120€" "+50" (income) "5.65 eur" */
-    const m=s.match(/(?:[+]?\s*€\s*(\d+[.,]?\d*)|(\d+[.,]\d{2})\b|(\d+)\s*(?:€|eur(?:os?)?)\b|^\+\s*(\d+[.,]?\d*))/i);
+    /* Matches: "5,65€" "34.20" "120€" "40€" "+50" (income) "5.65 eur" "Tomates 5€"
+       NOTE: original regex used \b after € which never matches (€ is not a word
+       boundary). Fixed by using a non-word lookahead. */
+    if(!s) return null;
+    const m=s.match(/(?:[+]?\s*€\s*(\d+(?:[.,]\d+)?)|(\d+[.,]\d{2})(?=\D|$)|(\d+)\s*(?:€|eur(?:os?)?)(?=\W|$)|^\+\s*(\d+(?:[.,]\d+)?))/i);
     if(!m)return null;
     const raw=(m[1]||m[2]||m[3]||m[4]||'').replace(',','.');
     const v=parseFloat(raw);
@@ -1121,7 +1669,7 @@ function stopVoice(){
 }
 function handleDictationTranscript(t){
   const inp=q('txt-input');if(inp)inp.value=t;
-  const{entry,expResult}=UniversalIntake.receive({source:'voice',user:'default',rawInput:t,inputType:'voice',location:AppState.currentContext,device:AppState.device,createdAt:now()});
+  const{entry,expResult}=UniversalIntake.receive({source:'voice',user:AppState.currentUser,rawInput:t,inputType:'voice',location:AppState.currentContext,device:AppState.device,createdAt:now()});
   renderInterpretationPanel(entry,expResult);
   AppState.voiceMode='idle';renderVoiceState();
   speakConfirmation(entry);
@@ -1153,30 +1701,54 @@ function confirmPendingEntry(){
   if(AppState.pendingExpCat&&entry.module==='gastos'){
     entry.metadata.category=AppState.pendingExpCat;
   }
-  AppState.entries.push(entry);saveEntries();AppState.pendingEntry=null;AppState.pendingExpCat=null;
+  /* Apply pending financial fields (if entry is financial) */
+  if(entry.amount!=null){
+    const md=entry.metadata||(entry.metadata={});
+    if(AppState.pendingScope) md.financialScope=AppState.pendingScope;
+    if(AppState.pendingOwner) md.owner=AppState.pendingOwner;
+    if(AppState.pendingStatus) md.financialStatus=AppState.pendingStatus;
+    /* Recompute visibleTo from scope/owner */
+    if(md.financialScope==='shared'){
+      md.visibleTo=['dani','patri'];
+      md.owner='shared';
+    } else {
+      md.visibleTo=[md.owner];
+    }
+  }
+  AppState.entries.push(entry);saveEntries();
+  recomputeBudgetTotals();
+  AppState.pendingEntry=null;AppState.pendingExpCat=null;
+  AppState.pendingScope=null;AppState.pendingOwner=null;AppState.pendingStatus='confirmed';
   const inp=q('txt-input');if(inp)inp.value='';
   hideInterpretationPanel();
-  renderTodayPanel();renderModules();renderEntryLog();
+  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
   const mn=getModuleLabel(entry.module);
   const am=entry.amount!=null?' · '+entry.amount.toFixed(2)+'€':'';
   const cat=entry.metadata&&entry.metadata.category?(' · '+getCatLabel(entry.metadata.category)):'';
-  showToast('GUARDADO · '+mn+am+cat);
+  const plan=entry.metadata&&entry.metadata.financialStatus==='planned'?' · PLAN':'';
+  showToast('GUARDADO · '+mn+am+cat+plan);
 }
-function cancelPendingEntry(){AppState.pendingEntry=null;AppState.pendingExpCat=null;hideInterpretationPanel();showToast('ENTRADA CANCELADA');}
+function cancelPendingEntry(){
+  AppState.pendingEntry=null;AppState.pendingExpCat=null;
+  AppState.pendingScope=null;AppState.pendingOwner=null;AppState.pendingStatus='confirmed';
+  hideInterpretationPanel();showToast('ENTRADA CANCELADA');
+}
 function editPendingEntry(){
   const entry=AppState.pendingEntry;const inp=q('txt-input');
   if(entry&&inp){inp.value=entry.rawInput||'';inp.focus();}
-  AppState.pendingEntry=null;AppState.pendingExpCat=null;hideInterpretationPanel();showToast('EDITA Y VUELVE A REGISTRAR');
+  AppState.pendingEntry=null;AppState.pendingExpCat=null;
+  AppState.pendingScope=null;AppState.pendingOwner=null;AppState.pendingStatus='confirmed';
+  hideInterpretationPanel();showToast('EDITA Y VUELVE A REGISTRAR');
 }
 function doRegister(){
   const raw=(q('txt-input').value||'').trim();if(!raw){showToast('ESCRIBE O DICTA ALGO','tw');return;}
-  const{entry,expResult}=UniversalIntake.receive({source:AppState.currentContext?'nfc':'manual',user:'default',rawInput:raw,inputType:'text',location:AppState.currentContext,device:AppState.device,createdAt:now()});
+  const{entry,expResult}=UniversalIntake.receive({source:AppState.currentContext?'nfc':'manual',user:AppState.currentUser,rawInput:raw,inputType:'text',location:AppState.currentContext,device:AppState.device,createdAt:now()});
   renderInterpretationPanel(entry,expResult);
 }
 function handleQA(qa){
   if(qa.action){const p=qa.action.split(':');if(p[0]==='open')renderModuleDashboard(p[1]);return;}
   if(qa.prompt){const pf=qa.text||'';q('txt-input').value=pf;q('txt-input').focus();try{q('txt-input').setSelectionRange(pf.length,pf.length);}catch(e){}return;}
-  const{entry,expResult}=UniversalIntake.receive({source:AppState.currentContext?'nfc':'manual',user:'default',rawInput:qa.text,inputType:'text',location:AppState.currentContext,device:AppState.device,moduleHint:qa.mod||null,createdAt:now()});
+  const{entry,expResult}=UniversalIntake.receive({source:AppState.currentContext?'nfc':'manual',user:AppState.currentUser,rawInput:qa.text,inputType:'text',location:AppState.currentContext,device:AppState.device,moduleHint:qa.mod||null,createdAt:now()});
   renderInterpretationPanel(entry,expResult);
 }
 
@@ -1184,12 +1756,12 @@ function handleQA(qa){
 function renderInterpretationPanel(entry,expResult){
   AppState.pendingEntry=entry;
   AppState.pendingExpCat=expResult?expResult.category:null;
+  /* Sync pending finance picks with entry defaults */
+  const emd=entry.metadata||{};
+  AppState.pendingScope  = emd.financialScope || null;
+  AppState.pendingOwner  = emd.owner || null;
+  AppState.pendingStatus = emd.financialStatus || 'confirmed';
 
-  const sv=(id,v,show)=>{
-    const el=q(id);if(el)el.textContent=v;
-    const row=q('irow-'+id.replace('i-',''));
-    if(row){if(show===undefined||show)row.classList.remove('hidden');else row.classList.add('hidden');}
-  };
   const showRow=(id,show)=>{const el=q(id);if(el){if(show)el.classList.remove('hidden');else el.classList.add('hidden');}};
 
   q('i-raw').textContent=entry.rawInput||'--';
@@ -1218,15 +1790,22 @@ function renderInterpretationPanel(entry,expResult){
   q('i-ctx').textContent=entry.location&&CONTEXTS[entry.location]?CONTEXTS[entry.location].name:'—';
   if(entry.date) q('i-dat').textContent=entry.date+(entry.time?' · '+entry.time:'');
 
+  /* Financial pickers (scope / owner / status) — only for financial entries */
+  const finBox=q('fin-pickers');
+  if(entry.amount!=null && expResult && expResult.intent!=='create_income'){
+    finBox.classList.remove('hidden');
+    renderFinancialPickers();
+  } else {
+    finBox.classList.add('hidden');
+  }
+
   /* Expense category selector */
   const sel=q('expense-selector');
-  const selgrid=q('exp-cat-grid');
   if(isGasto&&expResult&&expResult.confidence!=='high'&&expResult.intent!=='create_income'){
     sel.classList.remove('hidden');
     renderExpenseCatSelector(expResult.category);
   } else if(isGasto&&expResult&&expResult.confidence==='high'){
     sel.classList.add('hidden');
-    /* still allow changing via a small "cambiar" link — but default is fine */
   } else {
     sel.classList.add('hidden');
   }
@@ -1239,6 +1818,75 @@ function renderInterpretationPanel(entry,expResult){
     panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
   const st=q('intake-status');if(st){st.textContent='REVIEW';st.classList.add('lcd');}
+}
+
+function renderFinancialPickers(){
+  /* Scope */
+  const scopeOpts=q('fin-scope-opts');
+  if(scopeOpts){
+    scopeOpts.innerHTML='';
+    [
+      {k:'personal',l:'PERSONAL'},
+      {k:'shared',  l:'COMÚN'}
+    ].forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(AppState.pendingScope===opt.k?' selected':'');
+      b.textContent=opt.l;
+      b.addEventListener('click',()=>{
+        AppState.pendingScope=opt.k;
+        /* If switching to shared, owner becomes shared. If personal, default to current user. */
+        if(opt.k==='shared') AppState.pendingOwner='shared';
+        else if(AppState.pendingOwner==='shared') AppState.pendingOwner=AppState.currentUser;
+        renderFinancialPickers();
+      });
+      scopeOpts.appendChild(b);
+    });
+  }
+  /* Owner */
+  const ownerOpts=q('fin-owner-opts');
+  if(ownerOpts){
+    ownerOpts.innerHTML='';
+    const isShared = AppState.pendingScope==='shared';
+    AppState.users.forEach(u=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(AppState.pendingOwner===u.id?' selected':'')+(isShared?' muted':'');
+      b.textContent=u.name.toUpperCase();
+      b.disabled=isShared;
+      b.addEventListener('click',()=>{
+        if(isShared) return;
+        AppState.pendingOwner=u.id;
+        renderFinancialPickers();
+      });
+      ownerOpts.appendChild(b);
+    });
+    const bs=document.createElement('button');
+    bs.className='fin-opt'+(AppState.pendingOwner==='shared'?' selected':'');
+    bs.textContent='COMÚN';
+    bs.addEventListener('click',()=>{
+      AppState.pendingOwner='shared';
+      AppState.pendingScope='shared';
+      renderFinancialPickers();
+    });
+    ownerOpts.appendChild(bs);
+  }
+  /* Status */
+  const statusOpts=q('fin-status-opts');
+  if(statusOpts){
+    statusOpts.innerHTML='';
+    [
+      {k:'confirmed',l:'CONFIRMADO',w:false},
+      {k:'planned',  l:'PLANIFICADO',w:true}
+    ].forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(opt.w?' warn':'')+(AppState.pendingStatus===opt.k?' selected':'');
+      b.textContent=opt.l;
+      b.addEventListener('click',()=>{
+        AppState.pendingStatus=opt.k;
+        renderFinancialPickers();
+      });
+      statusOpts.appendChild(b);
+    });
+  }
 }
 
 function renderExpenseCatSelector(currentCat){
@@ -1266,9 +1914,11 @@ function renderExpenseCatSelector(currentCat){
 
 function hideInterpretationPanel(){
   AppState.pendingEntry=null;AppState.pendingExpCat=null;
+  AppState.pendingScope=null;AppState.pendingOwner=null;AppState.pendingStatus='confirmed';
   const p=q('interpret-panel');if(p){p.classList.add('hidden');p.style.borderColor='';}
   const s=q('intake-status');if(s){s.textContent='READY';s.classList.remove('lcd');}
   const sel=q('expense-selector');if(sel)sel.classList.add('hidden');
+  const fin=q('fin-pickers');if(fin)fin.classList.add('hidden');
 }
 
 /* ─── RENDER: TOPBAR ─── */
@@ -1356,14 +2006,17 @@ function renderModules(){
 
 /* ─── RENDER: LOG ─── */
 function renderEntryLog(){
-  const list=q('log-list');const n=AppState.entries.length;
+  const list=q('log-list');
+  const visible=getVisibleEntries();
+  const n=visible.length;
+  const totalN=AppState.entries.length;
   const lc=q('log-count');if(lc)lc.textContent=n;
-  const fn=q('foot-n');if(fn)fn.textContent='ENTRIES: '+n;
-  const sn=q('sys-n');if(sn)sn.textContent=n;
+  const fn=q('foot-n');if(fn)fn.textContent='ENTRIES: '+n+(n!==totalN?' / '+totalN:'');
+  const sn=q('sys-n');if(sn)sn.textContent=totalN;
   if(!list)return;
   list.innerHTML='';
-  if(n===0){list.innerHTML='<div class="log-empty">— SIN ENTRADAS · REGISTRA ALGO —</div>';return;}
-  AppState.entries.slice(-18).reverse().forEach(e=>{
+  if(n===0){list.innerHTML='<div class="log-empty">— SIN ENTRADAS VISIBLES · REGISTRA ALGO —</div>';return;}
+  visible.slice(-18).reverse().forEach(e=>{
     const mod=e.module||'general';
     let color=getModuleColor(mod);
     let badgeLabel=getModuleLabel(mod);
@@ -1372,7 +2025,11 @@ function renderEntryLog(){
       color=getCatColor(e.metadata.category);
       badgeLabel=getCatLabel(e.metadata.category);
     }
-    const meta=e.amount!=null?((e.metadata&&e.metadata.category==='ingresos'?'+':'')+e.amount.toFixed(2)+'€'):'';
+    const md=e.metadata||{};
+    const isPlanned=md.financialStatus==='planned';
+    const isShared=md.financialScope==='shared';
+    const ownerTag = md.owner && md.owner!=='shared' ? md.owner.toUpperCase() : '';
+    const meta=e.amount!=null?((md.category==='ingresos'?'+':'')+e.amount.toFixed(2)+'€'+(isPlanned?' · PLAN':'')):'';
     const nfcTag=e.location&&CONTEXTS[e.location]?' · '+CONTEXTS[e.location].name:'';
     const row=document.createElement('div');row.className='entry-row';
     row.style.cssText='--entry-color:'+color+';';
@@ -1383,6 +2040,8 @@ function renderEntryLog(){
         +'<div class="entry-meta">'
           +'<span class="category-badge" style="--entry-color:'+color+'">'+esc(badgeLabel)+'</span>'
           +(meta?'<span class="entry-amount">'+esc(meta)+'</span>':'')
+          +(ownerTag?'<span class="entry-nfc">· '+esc(ownerTag)+'</span>':'')
+          +(isShared&&e.amount!=null?'<span class="entry-nfc">· COMÚN</span>':'')
           +(nfcTag?'<span class="entry-nfc">'+esc(nfcTag)+'</span>':'')
         +'</div>'
       +'</div>'
@@ -1400,16 +2059,17 @@ function renderModuleDashboard(key){
 
   /* Module header */
   const dh=q('d-mod-header');
+  const visBase=getVisibleEntries();
   if(dh){
     dh.innerHTML='<div class="drawer-mod-header" style="--module-color:'+color+'">'
       +'<div class="drawer-mod-icon">'+mkIcon(m.icon,color)+'</div>'
       +'<div>'
         +'<div class="drawer-mod-title" style="color:'+color+'">'+m.name+'</div>'
-        +'<div class="drawer-mod-sub">'+AppState.entries.filter(e=>e.module===key).length+' ENTRADAS TOTALES</div>'
+        +'<div class="drawer-mod-sub">'+visBase.filter(e=>e.module===key).length+' ENTRADAS VISIBLES</div>'
       +'</div></div>';
   }
 
-  const all=key==='dashboard'?AppState.entries.slice():AppState.entries.filter(e=>e.module===key);
+  const all=key==='dashboard'?visBase.slice():visBase.filter(e=>e.module===key);
   const todayStr=new Date().toISOString().slice(0,10);
   const todayN=all.filter(e=>(e.createdAt||'').slice(0,10)===todayStr).length;
   const pending=all.filter(e=>e.status==='open').length;
@@ -1530,9 +2190,176 @@ function fallbackCopy(text){
 }
 function closeDrwrs(){q('mod-drawer-bg').classList.add('hidden');q('set-drawer-bg').classList.add('hidden');}
 
+/* ─── RENDER: USER SWITCHER ─── */
+function renderUserSwitcher(){
+  const wrap=q('user-switcher');if(!wrap)return;
+  wrap.innerHTML='';
+  AppState.users.forEach(u=>{
+    const b=document.createElement('button');
+    b.className='user-pill'+(u.id===AppState.currentUser?' active':'');
+    b.style.cssText='--user-color:'+u.color+';';
+    b.innerHTML=esc(u.name.toUpperCase())
+      +'<span class="urole">'+(u.role==='admin'?'ADMIN':'USER')+'</span>';
+    b.addEventListener('click',()=>switchUser(u.id));
+    wrap.appendChild(b);
+  });
+}
+
+function switchUser(id){
+  if(!AppState.users.some(u=>u.id===id)) return;
+  AppState.currentUser=id;
+  saveCurrentUser();
+  /* If new user is not admin, force out of admin view */
+  if(AppState.currentView==='admin' && !isCurrentUserAdmin()){
+    AppState.currentView='mine';
+    saveView();
+  }
+  /* If a pending entry is open, cancel — defaults differ per user */
+  if(AppState.pendingEntry) cancelPendingEntry();
+  showToast('USUARIO: '+getCurrentUser().name.toUpperCase());
+  renderAll();
+}
+
+/* ─── RENDER: VIEW SWITCHER ─── */
+function renderViewSwitcher(){
+  const wrap=q('view-switcher');if(!wrap)return;
+  wrap.innerHTML='';
+  const cu=getCurrentUser();
+  const views=[
+    {k:'mine',  l:'MI VISTA'},
+    {k:'shared',l:'COMÚN'}
+  ];
+  if(isCurrentUserAdmin()) views.push({k:'admin', l:'ADMIN', adminOnly:true});
+  views.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='view-pill'+(AppState.currentView===v.k?' active':'')+(v.adminOnly?' admin-only':'');
+    b.textContent=v.l + (v.k==='mine'?' · '+cu.name.toUpperCase():'');
+    b.addEventListener('click',()=>{
+      AppState.currentView=v.k;
+      saveView();
+      renderAll();
+    });
+    wrap.appendChild(b);
+  });
+}
+
+/* ─── RENDER: FINANZAS ─── */
+function renderFinanzasPanel(){
+  const wrap=q('budget-list');if(!wrap)return;
+  recomputeBudgetTotals();
+  const cu=AppState.currentUser;
+  const view=AppState.currentView;
+
+  /* Decide which budgets to show */
+  let budgets;
+  if(view==='admin' && isCurrentUserAdmin()){
+    budgets=AppState.budgets.slice();
+  } else if(view==='shared'){
+    budgets=AppState.budgets.filter(b=>b.scope==='shared');
+  } else {
+    /* 'mine' view: own personals + shared */
+    budgets=AppState.budgets.filter(b=>
+      b.scope==='shared' || (b.scope==='personal' && b.owner===cu)
+    );
+  }
+
+  const sub=q('fin-sub');
+  if(sub){
+    const lbl = view==='admin' ? 'TODOS · ADMIN' : (view==='shared' ? 'COMÚN' : 'PERSONALES + COMUNES');
+    sub.textContent=lbl;
+  }
+
+  wrap.innerHTML='';
+  if(!budgets.length){
+    wrap.innerHTML='<div class="budget-empty">— SIN PRESUPUESTOS VISIBLES —</div>';
+    return;
+  }
+
+  budgets.forEach(b=>{
+    const cat=EXP_CATS[b.category]||EXP_CATS['general-exp'];
+    const color=cat.color;
+    const limit=b.limit||1;
+    const pctConfirmed = Math.min(100, (b.spentConfirmed/limit)*100);
+    const pctPlanned   = Math.min(100 - pctConfirmed, (b.spentPlanned/limit)*100);
+    const over = b.spentConfirmed > limit;
+    const overProjected = (b.spentConfirmed + b.spentPlanned) > limit;
+    const ownerLabel = b.scope==='shared' ? 'COMÚN'
+      : (getUserById(b.owner) ? getUserById(b.owner).name.toUpperCase() : b.owner.toUpperCase());
+
+    const row=document.createElement('div');
+    row.className='budget-row';
+    row.style.cssText='--budget-color:'+color+';';
+    row.innerHTML=
+      '<div class="budget-head">'
+        +'<span class="budget-name">'+esc(b.name)+'</span>'
+        +'<span class="budget-scope-tag '+b.scope+'">'+ownerLabel+'</span>'
+      +'</div>'
+      +'<div class="budget-amounts">'
+        +'<strong>'+b.spentConfirmed.toFixed(2)+'€</strong> / '+limit.toFixed(2)+'€'
+        +(b.spentPlanned>0?' · <span style="color:var(--warn)">+'+b.spentPlanned.toFixed(2)+'€ plan</span>':'')
+      +'</div>'
+      +'<div class="budget-bar-wrap">'
+        +'<div class="budget-bar-confirmed'+(over?' budget-bar-over':'')+'" style="width:'+pctConfirmed.toFixed(1)+'%"></div>'
+        +(pctPlanned>0?'<div class="budget-bar-planned'+(overProjected?' budget-bar-over':'')+'" style="left:'+pctConfirmed.toFixed(1)+'%;width:'+pctPlanned.toFixed(1)+'%"></div>':'')
+      +'</div>'
+      +'<div class="budget-stats">'
+        +'<div class="budget-stat"><span class="budget-stat-k">LÍMITE</span><span class="budget-stat-v">'+limit.toFixed(2)+'€</span></div>'
+        +'<div class="budget-stat"><span class="budget-stat-k">GASTADO</span><span class="budget-stat-v'+(over?' danger':'')+'">'+b.spentConfirmed.toFixed(2)+'€</span></div>'
+        +'<div class="budget-stat"><span class="budget-stat-k">PLANIFICADO</span><span class="budget-stat-v planned">'+b.spentPlanned.toFixed(2)+'€</span></div>'
+        +'<div class="budget-stat"><span class="budget-stat-k">DISP. PREV.</span><span class="budget-stat-v'+(overProjected?' danger':'')+'">'+b.availableProjected.toFixed(2)+'€</span></div>'
+      +'</div>';
+    wrap.appendChild(row);
+  });
+}
+
+/* ─── RENDER: ADMIN SECTIONS IN SETTINGS ─── */
+function renderUsersList(){
+  const wrap=q('users-list');if(!wrap)return;
+  wrap.innerHTML='';
+  AppState.users.forEach(u=>{
+    const row=document.createElement('div');row.className='kv-row';
+    row.innerHTML='<span class="kv-k">'+esc(u.name)+'</span>'
+      +'<span class="kv-v" style="color:'+u.color+'">'+esc(u.role.toUpperCase())+' · '+esc(u.id)+(u.id===AppState.currentUser?' · (activo)':'')+'</span>';
+    wrap.appendChild(row);
+  });
+}
+function renderRulesList(){
+  const wrap=q('rules-list');if(!wrap)return;
+  wrap.innerHTML='';
+  if(!AppState.activityRules.length){
+    wrap.innerHTML='<div style="font-size:10px;color:var(--muted);padding:6px">— SIN REGLAS —</div>';
+    return;
+  }
+  AppState.activityRules.forEach(r=>{
+    const row=document.createElement('div');row.className='kv-row';
+    const label = r.name + (r.active?'':' · OFF');
+    const detail = r.category + ' · ' + (r.defaultAmount!=null?r.defaultAmount+'€':'sin importe')
+      + ' · ' + r.defaultScope + ' · ' + r.defaultOwner
+      + ' · ' + r.financialStatus;
+    row.innerHTML='<span class="kv-k">'+esc(label)+'</span>'
+      +'<span class="kv-v">'+esc(detail)+'</span>';
+    wrap.appendChild(row);
+  });
+}
+
+/* Toggle admin-only sections (Usuarios / Reglas) in settings drawer */
+function applyAdminGating(){
+  const u=getCurrentUser();
+  const isAdmin=!!(u && u.role==='admin');
+  const adminEls=[q('set-admin-section'),q('set-rules-section')];
+  adminEls.forEach(el=>{
+    if(!el) return;
+    if(isAdmin) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
+}
+
 function renderAll(){
   renderTopBar();renderContextBanner();renderQuickActions();
-  renderTodayPanel();renderModules();renderEntryLog();renderVoiceState();
+  renderUserSwitcher();renderViewSwitcher();
+  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
+  renderVoiceState();
+  applyAdminGating();
 }
 
 /* ─── NFC PARAMS ─── */
@@ -1560,7 +2387,18 @@ function doImport(file){
       const d=JSON.parse(ev.target.result);
       const imported=Array.isArray(d.entries)?d.entries:(Array.isArray(d)?d:null);
       if(!imported){showToast('JSON SIN ENTRADAS','tw');return;}
-      AppState.entries=AppState.entries.concat(imported);saveEntries();renderAll();
+      AppState.entries=AppState.entries.concat(imported);
+      /* Optional: import budgets and rules if present */
+      if(Array.isArray(d.budgets) && d.budgets.length){
+        AppState.budgets=d.budgets; saveBudgets();
+      }
+      if(Array.isArray(d.activityRules) && d.activityRules.length){
+        AppState.activityRules=d.activityRules; saveActivityRules();
+      }
+      saveEntries();
+      migrateEntries();
+      recomputeBudgetTotals();
+      renderAll();
       showToast('IMPORTADAS '+imported.length+' ENTRADAS');
     }catch(e){showToast('JSON INVÁLIDO','td');}
   };
@@ -1586,6 +2424,9 @@ function wireEvents(){
   q('btn-clear-ctx').addEventListener('click',clearContext);
   q('btn-settings').addEventListener('click',()=>{
     renderNfcConfig();
+    renderUsersList();
+    renderRulesList();
+    applyAdminGating();
     const sd=q('sys-dev');if(sd)sd.textContent=AppState.device.toUpperCase();
     q('set-drawer-bg').classList.remove('hidden');
   });
@@ -1606,7 +2447,16 @@ function wireEvents(){
 function init(){
   const savedTheme=localStorage.getItem(THEME_KEY)||'light';
   applyTheme(savedTheme);
-  loadEntries();parseNfcParams();initSpeech();
+  /* Multi-user / finance bootstrap — order matters */
+  loadUsers();
+  loadCurrentUser();
+  loadView();
+  loadBudgets();
+  loadActivityRules();
+  loadEntries();
+  migrateEntries();              /* backfill financialScope/owner/visibleTo on old entries */
+  recomputeBudgetTotals();       /* prime budget counters from existing entries */
+  parseNfcParams();initSpeech();
   const fd=q('foot-dev');if(fd)fd.textContent='DEVICE: '+AppState.device.toUpperCase();
   wireEvents();renderAll();
 }

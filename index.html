@@ -617,9 +617,14 @@ button{cursor:pointer;}
 
 /* ── ENTRY ROW SWIPE / ACTIONS ── */
 .log-list{display:flex;flex-direction:column;gap:4px;}
+
+/* Swipe wrap: clip is needed so the row slides over the background.
+   Actions live BEHIND the row (z-index:1 vs row z-index:2) so the
+   row covers them at rest. On swipe the row moves left, revealing them.
+   overflow:hidden keeps the swipe effect contained. */
 .entry-wrap{position:relative;overflow:hidden;border-radius:var(--r);}
 .entry-wrap .entry-row{
-  position:relative;z-index:1;
+  position:relative;z-index:2;
   transition:transform .18s ease;
   border-radius:var(--r);
   margin:0;
@@ -627,7 +632,8 @@ button{cursor:pointer;}
 .entry-wrap.swiped .entry-row{transform:translateX(-100px);}
 .entry-actions{
   position:absolute;right:0;top:0;bottom:0;width:100px;
-  display:flex;align-items:stretch;z-index:0;border-radius:0 var(--r) var(--r) 0;
+  display:flex;align-items:stretch;z-index:1;
+  border-radius:0 var(--r) var(--r) 0;
   overflow:hidden;
 }
 .entry-act-edit{
@@ -648,8 +654,36 @@ button{cursor:pointer;}
   background:transparent;border:none;color:var(--dim);font-size:13px;
   padding:0 5px;cursor:pointer;line-height:1;height:100%;display:flex;align-items:center;
   transition:color .1s;flex-shrink:0;
+  position:relative;z-index:3; /* always above row, inside or outside drawer */
 }
 .entry-menu-btn:hover{color:var(--muted);}
+
+/* ── ENTRY ACTION POPOVER (fixed, immune to overflow:hidden parents) ── */
+#entry-action-popover{
+  position:fixed;
+  z-index:9999;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--r2);
+  box-shadow:0 8px 24px var(--shadow);
+  display:flex;flex-direction:column;
+  min-width:130px;
+  animation:fadein .12s ease;
+  overflow:hidden;
+}
+#entry-action-popover button{
+  background:transparent;border:none;
+  color:var(--text);font-family:var(--disp);
+  font-size:10px;letter-spacing:1.5px;
+  padding:10px 14px;text-align:left;
+  cursor:pointer;transition:background .1s;
+  display:flex;align-items:center;gap:8px;
+}
+#entry-action-popover button:hover{background:var(--panel2);}
+#entry-action-popover button.danger{color:var(--danger);}
+#entry-action-popover button:not(:last-child){
+  border-bottom:1px solid var(--bsoft);
+}
 
 /* Confirm-delete inline overlay */
 .delete-confirm{
@@ -2243,19 +2277,60 @@ function recalculateBudgetsFromEntries(){
   recomputeBudgetTotals();
 }
 
-/* closeEntryActions — close any open swipe panel or delete confirm */
+/* closeEntryActions — close swipe panel, popover, and delete confirm */
 function closeEntryActions(){
   document.querySelectorAll('.entry-wrap.swiped').forEach(w=>w.classList.remove('swiped'));
   document.querySelectorAll('.delete-confirm').forEach(el=>el.remove());
+  const pop=document.getElementById('entry-action-popover');
+  if(pop) pop.remove();
 }
 
-/* openEntryActions(entryId) — toggle swipe state on the given row */
-function openEntryActions(entryId){
-  const wrap=document.querySelector('[data-entry-id="'+entryId+'"]');
-  if(!wrap) return;
-  const already=wrap.classList.contains('swiped');
+/* openEntryActions(entryId, triggerEl) — show fixed-position popover.
+   Using position:fixed makes it immune to overflow:hidden in any ancestor.
+   triggerEl is the ··· button whose bounding rect we use for placement. */
+function openEntryActions(entryId, triggerEl){
   closeEntryActions();
-  if(!already) wrap.classList.add('swiped');
+  /* Also trigger swipe on the wrap for visual feedback */
+  const wrap=document.querySelector('[data-entry-id="'+entryId+'"]');
+  if(wrap) wrap.classList.add('swiped');
+
+  const pop=document.createElement('div');
+  pop.id='entry-action-popover';
+  pop.setAttribute('data-for-entry',entryId);
+
+  const btnEdit=document.createElement('button');
+  btnEdit.innerHTML='✎ &nbsp;EDITAR';
+  btnEdit.addEventListener('click',e=>{e.stopPropagation();closeEntryActions();startEditEntry(entryId);});
+
+  const btnDel=document.createElement('button');
+  btnDel.className='danger';
+  btnDel.innerHTML='✕ &nbsp;BORRAR';
+  btnDel.addEventListener('click',e=>{e.stopPropagation();closeEntryActions();confirmDeleteEntry(entryId);});
+
+  pop.appendChild(btnEdit);
+  pop.appendChild(btnDel);
+  document.body.appendChild(pop);
+
+  /* Position below/above the trigger button */
+  if(triggerEl){
+    const r=triggerEl.getBoundingClientRect();
+    const popW=140;
+    let left=r.right-popW;
+    if(left<4) left=4;
+    let top=r.bottom+4;
+    /* flip up if too close to bottom */
+    if(top+80>window.innerHeight) top=r.top-84;
+    pop.style.left=left+'px';
+    pop.style.top=top+'px';
+  }
+
+  /* Close on next outside click */
+  setTimeout(()=>{
+    document.addEventListener('click', function handler(ev){
+      if(!pop.contains(ev.target)){closeEntryActions();}
+      document.removeEventListener('click',handler);
+    });
+  },0);
 }
 
 /* confirmDeleteEntry(entryId) — show inline confirm overlay */
@@ -2451,10 +2526,10 @@ function attachSwipeHandlers(list){
       const dx=startX-e.changedTouches[0].clientX;
       const entryId=wrap.getAttribute('data-entry-id');
       if(dx>40){
-        /* swipe left → open actions */
-        openEntryActions(entryId);
+        /* swipe left → open popover anchored to the wrap's right edge */
+        const menuBtn=wrap.querySelector('.entry-menu-btn');
+        openEntryActions(entryId, menuBtn);
       } else if(dx<-40){
-        /* swipe right → close */
         closeEntryActions();
       }
     },{passive:true});
@@ -2518,7 +2593,7 @@ function buildEntryRow(e){
 
   row.querySelector('.entry-menu-btn').addEventListener('click',ev=>{
     ev.stopPropagation();
-    openEntryActions(e.id);
+    openEntryActions(e.id, ev.currentTarget);
   });
   row.addEventListener('click',ev=>{
     if(wrap.classList.contains('swiped')){ev.stopPropagation();closeEntryActions();}

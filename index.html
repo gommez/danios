@@ -1339,27 +1339,29 @@ function getOtherUserId(){
 function canCurrentUserSeeEntry(entry){
   if(!entry) return false;
   const md=entry.metadata||{};
-  /* Non-financial entries (no amount) follow module visibility:
-     they default to shared/visible to both, unless explicitly scoped. */
-  const isFinancial = entry.amount!=null;
   const cu=AppState.currentUser;
 
-  /* Backward compat: entries without scope/visibleTo default to shared */
-  const scope = md.financialScope || (isFinancial ? 'shared' : 'shared');
-  const visibleTo = Array.isArray(md.visibleTo) && md.visibleTo.length
-    ? md.visibleTo
-    : ['dani','patri'];
+  /* Backward compat: entries without financialScope default to shared */
+  const scope = md.financialScope || 'shared';
 
+  /* REGLA DE PRIVACIDAD — irrestricta, no hay bypass por rol:
+     - scope === 'shared'   → visible para todos
+     - scope === 'personal' → visible SOLO para el owner
+     El rol admin nunca salta esta comprobación. */
   if(scope==='shared') return true;
-  if(visibleTo.indexOf(cu)!==-1) return true;
-  return false;
+  /* personal: owner must match current user exactly */
+  const owner = md.owner || null;
+  return owner === cu;
 }
 
-/* getVisibleEntries — central filter respecting current user AND current view.
-   - 'mine'   → personal entries of current user + shared
-   - 'shared' → only shared entries
-   - 'admin'  → all entries (only available to admin)
-   ALL renders should call this, never AppState.entries directly. */
+/* getVisibleEntries — filtro central de privacidad.
+   REGLA ÚNICA: scope==='shared' → visible para todos.
+                scope==='personal' → visible SOLO para owner === currentUser.
+   El rol admin NO bypasea esta regla en ninguna vista.
+   - 'mine'   → entradas personales del usuario actual + compartidas
+   - 'shared' → solo entradas compartidas
+   - 'admin'  → configuración del sistema; los datos personales siguen la regla anterior
+   TODOS los renders deben llamar a esta función, nunca AppState.entries directamente. */
 function getVisibleEntries(opts){
   opts = opts || {};
   const view = opts.view || AppState.currentView;
@@ -1369,22 +1371,21 @@ function getVisibleEntries(opts){
     const md=e.metadata||{};
     const scope = md.financialScope || 'shared';
     const owner = md.owner || 'shared';
-    const visibleTo = Array.isArray(md.visibleTo) && md.visibleTo.length
-      ? md.visibleTo
-      : ['dani','patri'];
 
-    if(view==='admin'){
-      /* Admin sees everything — UI must label things clearly */
-      return isCurrentUserAdmin();
-    }
+    /* Regla de privacidad — no tiene excepciones por rol */
+    const isVisible = (scope==='shared') || (scope==='personal' && owner===cu);
+
     if(view==='shared'){
+      /* Vista común: solo entradas explícitamente compartidas */
       return scope==='shared';
     }
-    /* 'mine' view */
-    if(scope==='shared') return true;
-    if(visibleTo.indexOf(cu)!==-1) return true;
-    /* Even admin should NOT see Patri's personals in 'mine' view */
-    return false;
+    if(view==='admin'){
+      /* Vista admin: permite ver configuración del sistema.
+         Los datos personales siguen siendo privados: solo los tuyos + compartidos. */
+      return isVisible;
+    }
+    /* 'mine' (default): mis personales + compartidos */
+    return isVisible;
   });
 }
 
@@ -2250,14 +2251,15 @@ function renderFinanzasPanel(){
   const cu=AppState.currentUser;
   const view=AppState.currentView;
 
-  /* Decide which budgets to show */
+  /* Decide which budgets to show.
+     REGLA: presupuestos personales solo visibles para su owner.
+     El rol admin NO ve presupuestos personales ajenos. */
   let budgets;
-  if(view==='admin' && isCurrentUserAdmin()){
-    budgets=AppState.budgets.slice();
-  } else if(view==='shared'){
+  if(view==='shared'){
     budgets=AppState.budgets.filter(b=>b.scope==='shared');
   } else {
-    /* 'mine' view: own personals + shared */
+    /* 'mine' y 'admin': presupuestos propios + compartidos.
+       Admin puede ver config del sistema pero no finanzas personales ajenas. */
     budgets=AppState.budgets.filter(b=>
       b.scope==='shared' || (b.scope==='personal' && b.owner===cu)
     );
@@ -2265,7 +2267,7 @@ function renderFinanzasPanel(){
 
   const sub=q('fin-sub');
   if(sub){
-    const lbl = view==='admin' ? 'TODOS · ADMIN' : (view==='shared' ? 'COMÚN' : 'PERSONALES + COMUNES');
+    const lbl = view==='shared' ? 'COMÚN' : 'PERSONALES + COMUNES';
     sub.textContent=lbl;
   }
 

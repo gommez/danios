@@ -12,6 +12,7 @@
    DANI OS · v0.7 · LIGHT MODE + MULTI-USER + BUDGETS
    ================================================ */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap');
 
 /* ── LIGHT THEME (default) ── */
 .theme-light {
@@ -105,6 +106,435 @@
   --mono: "IBM Plex Mono","Share Tech Mono","Courier New",monospace;
   --disp: "Share Tech Mono","IBM Plex Mono","Courier New",monospace;
   --r: 4px; --r2: 6px;
+}
+
+
+/* ── D-OS NEON THEME · visual layer only ── */
+.theme-neon {
+  --bg: #080B16;
+  --panel: rgba(18,22,38,0.72);
+  --panel2: rgba(255,255,255,0.055);
+  --panel3: rgba(255,255,255,0.095);
+  --border: rgba(255,255,255,0.12);
+  --bsoft: rgba(255,255,255,0.09);
+  --text: #F6F6FA;
+  --text-soft: #C9CBDA;
+  --muted: #8F93A8;
+  --dim: #5E637B;
+  --lcd: #FF2BC8;
+  --lcddim: #8A5CFF;
+  --warn: #FF8A2B;
+  --danger: #FF4F6D;
+  --btn: rgba(255,255,255,0.065);
+  --btnhov: rgba(255,255,255,0.11);
+  --shadow: rgba(0,0,0,0.48);
+  --panel-shadow: 0 34px 110px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,255,255,.12);
+
+  --primary: #FF2BC8;
+  --secondary: #557CFF;
+  --tertiary: #8A5CFF;
+  --green: #B6FF6A;
+  --cyan: #4DF1FF;
+  --orange: #FF8A2B;
+  --red: #FF4F6D;
+
+  --color-alimentacion: #B6FF6A;
+  --color-restauracion: #FF8A2B;
+  --color-ocio: #FF2BC8;
+  --color-hogar-exp: #D58BFF;
+  --color-limpieza-exp: #557CFF;
+  --color-mascotas-exp: #4DF1FF;
+  --color-transporte: #C9CBDA;
+  --color-salud: #FF4F6D;
+  --color-ingresos: #B6FF6A;
+  --color-general-exp: #8F93A8;
+
+  --color-compra: #B6FF6A;
+  --color-mascotas: #4DF1FF;
+  --color-gastos: #FF2BC8;
+  --color-limpieza: #557CFF;
+  --color-citas: #8A5CFF;
+  --color-hogar: #FF8A2B;
+  --color-dashboard: #B6FF6A;
+  --color-general: #8F93A8;
+
+  --mono: "Geist Mono","IBM Plex Mono","Share Tech Mono","Courier New",monospace;
+  --disp: "Geist","Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --r: 18px;
+  --r2: 26px;
+}
+
+.theme-neon html,
+html.theme-neon {
+  background: #080B16;
+}
+
+.theme-neon body {
+  font-family: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255,43,200,.38), transparent 30%),
+    radial-gradient(circle at 80% 14%, rgba(85,124,255,.34), transparent 32%),
+    radial-gradient(circle at 72% 86%, rgba(138,92,255,.30), transparent 34%),
+    linear-gradient(145deg, #101323 0%, #080B16 48%, #13172A 100%);
+  background-attachment: fixed;
+}
+.theme-neon body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,.04) 50%, transparent 58% 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 6px);
+  mix-blend-mode:screen;
+  opacity:.44;
+}
+
+.theme-neon #app,
+.theme-neon .app-inner {
+  max-width: 1120px;
+  padding: 24px 16px 96px;
+  gap: 18px;
+}
+
+.theme-neon #topbar,
+.theme-neon .panel,
+.theme-neon .drawer,
+.theme-neon .module-screen-header {
+  background: linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.035));
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  position: relative;
+  overflow: hidden;
+}
+.theme-neon #topbar::after,
+.theme-neon .panel::after,
+.theme-neon .drawer::after,
+.theme-neon .module-screen-header::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255,43,200,.13), transparent 32%),
+    radial-gradient(circle at 92% 78%, rgba(85,124,255,.12), transparent 34%);
+}
+.theme-neon #topbar > *,
+.theme-neon .panel > *,
+.theme-neon .drawer > *,
+.theme-neon .module-screen-header > * {
+  position: relative;
+  z-index: 1;
+}
+.theme-neon .panel {
+  padding: 24px;
+}
+.theme-neon .panel-head,
+.theme-neon .drawer-head {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+}
+.theme-neon .panel-title,
+.theme-neon .drawer-title,
+.theme-neon .section-lbl {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: var(--text-soft);
+  text-transform: uppercase;
+}
+.theme-neon .panel-sub,
+.theme-neon .infobox-lbl {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.theme-neon #topbar {
+  align-items: center;
+  padding: 16px 18px;
+}
+.theme-neon .brand-badge {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: 0 0 36px rgba(255,43,200,.28), 0 0 42px rgba(85,124,255,.22);
+}
+.theme-neon .brand-title {
+  font-family: "Geist", system-ui, sans-serif;
+  letter-spacing: .06em;
+  font-weight: 600;
+  color: var(--text);
+}
+.theme-neon .infobox,
+.theme-neon .user-switcher,
+.theme-neon .view-switcher,
+.theme-neon .pulse-panel,
+.theme-neon .nfc-row,
+.theme-neon .kv-list,
+.theme-neon .biom-box,
+.theme-neon .fin-pickers,
+.theme-neon .ipt-grid,
+.theme-neon .edit-section {
+  background: rgba(255,255,255,.055);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.theme-neon .icon-btn,
+.theme-neon .key,
+.theme-neon .qa,
+.theme-neon .module-screen-back {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.065);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.theme-neon .key-green,
+.theme-neon .user-pill.active,
+.theme-neon .view-pill.active {
+  color: #070914;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  box-shadow: 0 10px 28px rgba(255,43,200,.28), inset 0 1px 0 rgba(255,255,255,.32);
+}
+.theme-neon .key-red {
+  color: var(--red);
+  background: rgba(255,79,109,.10);
+  border-color: rgba(255,79,109,.45);
+}
+
+.theme-neon #btn-voice {
+  min-height: 84px;
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  background: rgba(5,7,16,.42);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 38px rgba(255,43,200,.10);
+  font-family: var(--mono);
+  color: var(--text-soft);
+}
+.theme-neon #btn-voice.listening {
+  background: linear-gradient(135deg, rgba(77,241,255,.16), rgba(85,124,255,.18));
+  border-color: rgba(77,241,255,.45);
+  color: var(--cyan);
+}
+.theme-neon .voice-dot {
+  color: var(--primary);
+  text-shadow: 0 0 18px rgba(255,43,200,.65);
+}
+.theme-neon #txt-input,
+.theme-neon .edit-input,
+.theme-neon .edit-select {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(5,7,16,.42);
+  color: var(--text);
+  padding: 14px 18px;
+  font-family: var(--mono);
+}
+.theme-neon .input-row {
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.theme-neon .metric-grid,
+.theme-neon .dashboard-grid {
+  gap: 16px;
+}
+.theme-neon .metric-card,
+.theme-neon .module-card,
+.theme-neon .budget-row,
+.theme-neon .entry-row,
+.theme-neon .exp-break-cell {
+  background: rgba(255,255,255,.055);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.theme-neon .module-card {
+  min-height: 142px;
+  padding: 22px 18px;
+  justify-content: space-between;
+}
+.theme-neon .module-card .icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.06);
+}
+.theme-neon .module-card .m-name,
+.theme-neon .metric-lbl,
+.theme-neon .budget-scope-tag,
+.theme-neon .category-badge,
+.theme-neon .status-badge {
+  font-family: var(--mono);
+  letter-spacing: .12em;
+}
+.theme-neon .module-card .m-total,
+.theme-neon .metric-num {
+  font-family: "Geist Mono","IBM Plex Mono",monospace;
+  font-size: 28px;
+}
+.theme-neon .entry-row {
+  cursor: pointer;
+  padding: 14px 16px 14px 0;
+}
+.theme-neon .entry-row:hover {
+  border-color: rgba(255,255,255,.26);
+  background: rgba(255,255,255,.075);
+}
+.theme-neon .entry-title,
+.theme-neon .budget-name {
+  font-family: "Geist", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+.theme-neon .entry-bar {
+  border-radius: 999px 0 0 999px;
+}
+.theme-neon .entry-time,
+.theme-neon .entry-amount,
+.theme-neon .budget-amounts,
+.theme-neon .budget-stat-v,
+.theme-neon .infobox-val,
+.theme-neon .ipt-v,
+.theme-neon .edit-id {
+  font-family: "Geist Mono","IBM Plex Mono",monospace;
+  font-variant-numeric: tabular-nums;
+}
+.theme-neon .budget-bar-wrap {
+  height: 9px;
+  background: rgba(255,255,255,.09);
+}
+.theme-neon .budget-row {
+  padding: 18px;
+  border-left-width: 4px;
+}
+.theme-neon .budget-stats {
+  gap: 12px;
+  margin-top: 12px;
+}
+.theme-neon .local-warn {
+  border-radius: 999px;
+  color: var(--orange);
+  border-color: rgba(255,138,43,.42);
+  background: rgba(255,138,43,.08);
+}
+
+.dos-orb-shell {
+  display: none;
+}
+.theme-neon .dos-orb-shell {
+  display: grid;
+  place-items: center;
+  margin: 2px 0 22px;
+}
+.theme-neon .dos-orb {
+  width: 124px;
+  height: 116px;
+  position: relative;
+  border-radius: 55% 45% 48% 52% / 48% 58% 42% 52%;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255,255,255,.88) 0 6%, rgba(255,255,255,.18) 11%, transparent 20%),
+    radial-gradient(circle at 58% 50%, rgba(255,43,200,.42), transparent 30%),
+    radial-gradient(circle at 42% 64%, rgba(85,124,255,.54), transparent 46%),
+    radial-gradient(circle at 78% 70%, rgba(77,241,255,.28), transparent 30%),
+    rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06),
+    0 0 42px rgba(85,124,255,.30),
+    0 0 86px rgba(255,43,200,.22),
+    inset 0 0 28px rgba(255,255,255,.08);
+  filter: saturate(125%);
+  animation: dosOrbMorph 8.5s ease-in-out infinite alternate, dosOrbFloat 5.5s ease-in-out infinite;
+}
+.theme-neon .dos-orb::before {
+  content:"";
+  position:absolute;
+  inset: 9px;
+  border-radius: 48% 52% 56% 44% / 54% 42% 58% 46%;
+  border: 1px solid rgba(255,255,255,.22);
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.22), transparent 28% 72%, rgba(255,255,255,.10)),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,.16), transparent 18%);
+  mix-blend-mode: screen;
+}
+.theme-neon .dos-orb::after {
+  content:"";
+  position:absolute;
+  inset: -14px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255,43,200,.18), rgba(77,241,255,.10), transparent 64%);
+  filter: blur(12px);
+  z-index: -1;
+}
+.theme-neon #btn-voice.listening ~ .dos-orb-shell .dos-orb,
+.theme-neon .dos-orb.listening {
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255,255,255,.88) 0 6%, rgba(255,255,255,.18) 11%, transparent 20%),
+    radial-gradient(circle at 46% 54%, rgba(77,241,255,.62), transparent 42%),
+    radial-gradient(circle at 62% 40%, rgba(85,124,255,.62), transparent 50%),
+    rgba(255,255,255,.07);
+  box-shadow: 0 0 0 1px rgba(77,241,255,.28), 0 0 52px rgba(77,241,255,.32), 0 0 94px rgba(85,124,255,.24);
+}
+@keyframes dosOrbFloat {
+  0%,100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+@keyframes dosOrbMorph {
+  0% { border-radius: 55% 45% 48% 52% / 48% 58% 42% 52%; }
+  50% { border-radius: 45% 55% 54% 46% / 52% 44% 56% 48%; }
+  100% { border-radius: 58% 42% 44% 56% / 45% 55% 48% 52%; }
+}
+
+.theme-neon .drawer-bg {
+  background: rgba(4,6,14,.62);
+  backdrop-filter: blur(18px);
+}
+.theme-neon #toast {
+  border-radius: 999px;
+  background: rgba(246,246,250,.92);
+  color: #080B16;
+  box-shadow: 0 18px 56px rgba(0,0,0,.32);
+}
+
+@media(max-width:600px){
+  .theme-neon #app,
+  .theme-neon .app-inner {
+    padding: 16px 14px 94px;
+    gap: 16px;
+  }
+  .theme-neon .panel {
+    padding: 20px;
+  }
+  .theme-neon #topbar {
+    border-radius: 28px;
+    align-items: flex-start;
+  }
+  .theme-neon .topbar-right {
+    gap: 8px;
+  }
+  .theme-neon .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+  .theme-neon .module-card {
+    min-height: 132px;
+  }
+  .theme-neon .dos-orb {
+    width: 108px;
+    height: 102px;
+  }
 }
 
 /* ── RESET ── */
@@ -844,6 +1274,7 @@ button{cursor:pointer;}
       <span class="panel-title">UNIVERSAL INTAKE</span>
       <span class="panel-sub lcd" id="intake-status">READY</span>
     </div>
+    <div class="dos-orb-shell" aria-hidden="true"><div class="dos-orb" id="dos-orb"></div></div>
     <button id="btn-voice"><span class="voice-dot">●</span><span id="voice-lbl">PULSAR Y HABLAR</span></button>
     <div class="input-row">
       <input id="txt-input" type="text" placeholder="ej: Tomates · Orlando 5,65€ · Verdita comió" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -1145,6 +1576,7 @@ button{cursor:pointer;}
       <div style="display:flex;gap:8px;">
         <button class="key" id="btn-theme-light">☀ CLARO</button>
         <button class="key" id="btn-theme-dark">☽ OSCURO</button>
+        <button class="key" id="btn-theme-neon">✦ NEON</button>
       </div>
     </div>
     <div>
@@ -3317,6 +3749,7 @@ function wireEvents(){
   q('btn-wipe').addEventListener('click',doWipe);
   q('btn-theme-light').addEventListener('click',()=>{applyTheme('light');showToast('TEMA CLARO');});
   q('btn-theme-dark').addEventListener('click',()=>{applyTheme('dark');showToast('TEMA OSCURO');});
+  const btnThemeNeon=q('btn-theme-neon');if(btnThemeNeon)btnThemeNeon.addEventListener('click',()=>{applyTheme('neon');showToast('TEMA NEON');});
   q('btn-save-edit').addEventListener('click',saveEditedEntry);
   q('btn-cancel-edit').addEventListener('click',cancelEditEntry);
   const backBtn=q('btn-back-module');if(backBtn)backBtn.addEventListener('click',()=>navigateToScreen('home'));

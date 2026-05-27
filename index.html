@@ -735,6 +735,34 @@ button{cursor:pointer;}
 .edit-row label{color:var(--muted);letter-spacing:1.5px;font-size:9px;}
 .edit-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;}
 .edit-actions .key{flex:1;min-width:80px;}
+
+/* ── SCREEN NAVIGATION ── */
+.screen{display:none;}
+.screen.active{display:block;}
+#screen-home{display:block;} /* default */
+
+/* Module screen */
+.module-screen-header{
+  display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);
+  padding:10px 12px;box-shadow:var(--panel-shadow);margin-bottom:0;
+}
+.app-inner{max-width:900px;margin:0 auto;padding:12px 10px 90px;display:flex;flex-direction:column;gap:10px;}
+.module-screen-back{
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  font-family:var(--disp);font-size:10px;letter-spacing:2px;
+  padding:7px 11px;border-radius:var(--r);transition:background .1s;
+  flex-shrink:0;
+}
+.module-screen-back:hover{background:var(--btnhov);}
+.module-screen-icon{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:var(--r);background:var(--panel2);border:1px solid var(--border);
+  flex-shrink:0;
+}
+.module-screen-icon svg{width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.module-screen-title{font-family:var(--disp);font-size:16px;letter-spacing:4px;flex:1;}
+.module-screen-count{font-size:9px;letter-spacing:2px;color:var(--muted);}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--panel2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -769,6 +797,7 @@ button{cursor:pointer;}
   <!-- LOCAL MODE WARNING -->
   <div class="local-warn" id="local-warn">⚠ MODO LOCAL · NO ES AUTENTICACIÓN REAL · FILTRO DE INTERFAZ</div>
 
+  <div class="screen active" id="screen-home">
   <!-- NFC CONTEXT BANNER -->
   <div id="ctx-banner" class="hidden">
     <div class="ctx-left">
@@ -974,7 +1003,46 @@ button{cursor:pointer;}
   </footer>
 </div>
 
-<!-- MODULE DRAWER -->
+</div><!-- /screen-home -->
+
+<!-- MODULE SCREEN: shared template, populated by JS -->
+<div class="screen" id="screen-module">
+  <div class="app-inner" style="max-width:900px;margin:0 auto;padding:12px 10px 90px;display:flex;flex-direction:column;gap:10px;">
+    <!-- Module screen header -->
+    <div class="module-screen-header" id="mod-screen-header">
+      <button class="module-screen-back" id="btn-back-module">← VOLVER</button>
+      <div class="module-screen-icon" id="mod-screen-icon"></div>
+      <div style="flex:1;overflow:hidden;">
+        <div class="module-screen-title" id="mod-screen-title">MÓDULO</div>
+        <div class="module-screen-count" id="mod-screen-count"></div>
+      </div>
+    </div>
+    <!-- Module stats -->
+    <section class="panel" id="mod-screen-stats-panel">
+      <div class="metric-grid" id="mod-screen-stats"></div>
+    </section>
+    <!-- Expense breakdown (gastos only) -->
+    <section class="panel hidden" id="mod-screen-breakdown-panel">
+      <div class="panel-head"><span class="panel-title">DESGLOSE</span></div>
+      <div id="mod-screen-breakdown"></div>
+    </section>
+    <!-- Quick actions -->
+    <section class="panel" id="mod-screen-actions-panel">
+      <div class="panel-head"><span class="panel-title">ACCIONES RÁPIDAS</span></div>
+      <div class="drawer-actions" id="mod-screen-actions"></div>
+    </section>
+    <!-- Entry list -->
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">ENTRADAS</span>
+        <span class="panel-sub" id="mod-screen-entry-count">0</span>
+      </div>
+      <div class="log-list" id="mod-screen-list"></div>
+    </section>
+  </div>
+</div>
+
+<!-- MODULE DRAWER (kept for settings back-compat, not used for module nav) -->
 <div class="drawer-bg hidden" id="mod-drawer-bg">
   <div class="drawer">
     <div class="drawer-head">
@@ -1385,7 +1453,8 @@ const AppState = {
   device:detectDevice(),theme:'light',
   pendingEditId:null,   /* legacy — kept for compatibility */
   editingEntryId:null,  /* id of entry currently in edit panel */
-  editingEntryOriginal:null /* snapshot before edits */
+  editingEntryOriginal:null, /* snapshot before edits */
+  currentScreen:'home'  /* 'home' | module key */
 };
 
 /* ─── UTILS ─── */
@@ -2228,7 +2297,7 @@ function renderModules(){
       +'<span class="m-total">'+stats.all+'</span>'
       +'<span class="m-pending">'+stats.pending+' pend.</span>'
       +'<span class="m-last">'+esc(lastTxt)+'</span>';
-    card.addEventListener('click',()=>renderModuleDashboard(key));
+    card.addEventListener('click',()=>navigateToScreen(key));
     grid.appendChild(card);
   });
 }
@@ -2356,7 +2425,7 @@ function deleteEntry(entryId){
   AppState.entries=AppState.entries.filter(e=>e.id!==entryId);
   saveEntries();
   recalculateBudgetsFromEntries();
-  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
+  renderCurrentScreen();
   showToast('REGISTRO ELIMINADO');
 }
 
@@ -2495,7 +2564,7 @@ function saveEditedEntry(){
   saveEntries();
   recalculateBudgetsFromEntries();
   cancelEditEntry();
-  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
+  renderCurrentScreen();
   showToast('REGISTRO ACTUALIZADO · '+newTitle.slice(0,20));
 }
 
@@ -2915,6 +2984,148 @@ function applyAdminGating(){
   });
 }
 
+
+/* ─── SCREEN NAVIGATION ─── */
+
+function navigateToScreen(screen){
+  closeEntryActions();
+  AppState.currentScreen=screen;
+  /* Show/hide top-level screens */
+  const homeScreen=document.getElementById('screen-home');
+  const modScreen=document.getElementById('screen-module');
+  if(screen==='home'){
+    if(homeScreen){homeScreen.classList.add('active');homeScreen.style.display='';}
+    if(modScreen){modScreen.classList.remove('active');modScreen.style.display='none';}
+    renderAll();
+  } else {
+    if(homeScreen){homeScreen.classList.remove('active');homeScreen.style.display='none';}
+    if(modScreen){modScreen.classList.add('active');modScreen.style.display='';}
+    renderModuleScreen(screen);
+  }
+}
+
+function renderModuleScreen(key){
+  const m=MODULES[key]||{name:key.toUpperCase(),color:'var(--color-general)',icon:'general'};
+  const color=m.color;
+  const visBase=getVisibleEntries();
+  const all=visBase.filter(e=>e.module===key);
+
+  /* Header */
+  const icon=q('mod-screen-icon');
+  if(icon){icon.innerHTML=mkIcon(m.icon,color);icon.style.borderColor=color;}
+  const title=q('mod-screen-title');
+  if(title){title.textContent=m.name;title.style.color=color;}
+  const cnt=q('mod-screen-count');
+  if(cnt) cnt.textContent=all.length+' ENTRADAS VISIBLES';
+
+  /* Stats */
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayN=all.filter(e=>(e.createdAt||'').slice(0,10)===todayStr).length;
+  const pending=all.filter(e=>e.status==='open').length;
+  const done=all.filter(e=>e.status==='done').length;
+  const spent=all.filter(e=>e.amount!=null&&(e.metadata&&e.metadata.category!=='ingresos')).reduce((s,e)=>s+e.amount,0);
+  const earned=all.filter(e=>e.amount!=null&&e.metadata&&e.metadata.category==='ingresos').reduce((s,e)=>s+e.amount,0);
+
+  const sg=q('mod-screen-stats');
+  if(sg){
+    sg.innerHTML='';
+    const cells=[
+      {n:all.length,l:'TOTAL',c:color},
+      {n:todayN,l:'HOY',c:color},
+      {n:pending,l:'PENDIENTES',c:'var(--warn)'},
+      {n:key==='gastos'?spent.toFixed(2)+'€':done,l:key==='gastos'?'GASTO TOTAL':'HECHOS',c:key==='gastos'?'var(--danger)':'var(--lcd)'}
+    ];
+    cells.forEach(c=>{
+      const cell=document.createElement('div');cell.className='metric-card';
+      cell.style.cssText='--module-color:'+c.c+';';
+      cell.innerHTML='<span class="metric-num">'+esc(c.n)+'</span><span class="metric-lbl">'+c.l+'</span>';
+      sg.appendChild(cell);
+    });
+  }
+
+  /* Expense breakdown for gastos */
+  const bp=q('mod-screen-breakdown-panel');
+  const bw=q('mod-screen-breakdown');
+  if(bp&&bw){
+    if(key==='gastos'&&all.length){
+      bp.classList.remove('hidden');
+      const catCounts={};const catSpent={};
+      all.forEach(e=>{
+        const cat=(e.metadata&&e.metadata.category)||'general-exp';
+        catCounts[cat]=(catCounts[cat]||0)+1;
+        if(e.amount!=null) catSpent[cat]=(catSpent[cat]||0)+e.amount;
+      });
+      const catKeys=Object.keys(catCounts).sort((a,b)=>catCounts[b]-catCounts[a]).slice(0,6);
+      if(catKeys.length){
+        let h='<div class="expense-breakdown">';
+        catKeys.forEach(k=>{
+          const c=EXP_CATS[k]||EXP_CATS['general-exp'];
+          h+='<div class="exp-break-cell" style="--cat-color:'+c.color+'">'
+            +'<div class="exp-break-name">'+c.label+'</div>'
+            +'<div class="exp-break-n">'+catCounts[k]+'</div>'
+            +(catSpent[k]!=null?'<div class="exp-break-amt">'+catSpent[k].toFixed(2)+'€</div>':'')
+            +'</div>';
+        });
+        h+='</div>';
+        if(earned>0) h+='<div style="font-size:9px;color:var(--color-ingresos);margin-top:6px;letter-spacing:1px">INGRESOS: +'+earned.toFixed(2)+'€</div>';
+        bw.innerHTML=h;
+      } else bw.innerHTML='';
+    } else {
+      bp.classList.add('hidden');
+      bw.innerHTML='';
+    }
+  }
+
+  /* Quick actions */
+  const aw=q('mod-screen-actions');
+  const ap=q('mod-screen-actions-panel');
+  if(aw){
+    aw.innerHTML='';
+    const seen=new Set();
+    Object.values(CONTEXTS).forEach(cx=>{
+      cx.qa.forEach(qa=>{
+        if(seen.has(qa.label)) return;
+        if(qa.mod===key||(qa.action&&qa.action.split(':')[1]===key)){
+          seen.add(qa.label);
+          const b=document.createElement('button');b.className='qa';b.textContent=qa.label;
+          b.addEventListener('click',()=>handleQA(qa));
+          aw.appendChild(b);
+        }
+      });
+    });
+    if(!aw.children.length){
+      aw.innerHTML='<span style="color:var(--muted);font-size:10px">— SIN ACCIONES RÁPIDAS —</span>';
+    }
+  }
+  if(ap){
+    /* Hide actions panel if empty */
+    const hasActions=aw&&aw.querySelector('button');
+    if(hasActions) ap.classList.remove('hidden'); else ap.classList.add('hidden');
+  }
+
+  /* Entry list — uses buildEntryRow, same as home log */
+  const lw=q('mod-screen-list');
+  const ec=q('mod-screen-entry-count');
+  if(lw){
+    lw.innerHTML='';
+    if(ec) ec.textContent=all.length;
+    if(!all.length){
+      lw.innerHTML='<div class="log-empty">— SIN ENTRADAS VISIBLES —</div>';
+    } else {
+      all.slice().reverse().forEach(e=>{lw.appendChild(buildEntryRow(e));});
+      attachSwipeHandlers(lw);
+    }
+  }
+
+  /* Edit panel: re-render after save/delete must refresh module screen */
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderCurrentScreen(){
+  if(AppState.currentScreen==='home') renderAll();
+  else renderModuleScreen(AppState.currentScreen);
+}
+
 function renderAll(){
   renderTopBar();renderContextBanner();renderQuickActions();
   renderUserSwitcher();renderViewSwitcher();
@@ -3004,6 +3215,7 @@ function wireEvents(){
   q('btn-theme-dark').addEventListener('click',()=>{applyTheme('dark');showToast('TEMA OSCURO');});
   q('btn-save-edit').addEventListener('click',saveEditedEntry);
   q('btn-cancel-edit').addEventListener('click',cancelEditEntry);
+  const backBtn=q('btn-back-module');if(backBtn)backBtn.addEventListener('click',()=>navigateToScreen('home'));
 }
 
 /* ─── INIT ─── */

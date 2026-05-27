@@ -382,6 +382,7 @@ button{cursor:pointer;}
 .status-badge{font-size:8px;padding:1px 4px;border-radius:2px;border:1px solid;letter-spacing:.5px;white-space:nowrap;}
 .status-badge.open{color:var(--warn);border-color:var(--warn);}
 .status-badge.done{color:var(--lcd);border-color:var(--lcd);}
+.status-badge.planned{color:var(--warn);border-color:var(--warn);}
 .log-empty{text-align:center;color:var(--muted);padding:20px;font-size:11px;letter-spacing:2px;}
 
 /* ── CONFIDENCE BADGE ── */
@@ -669,6 +670,35 @@ button{cursor:pointer;}
   padding:6px 10px;border-radius:var(--r);cursor:pointer;transition:opacity .1s;
 }
 .delete-confirm-ok:hover{opacity:.85;}
+
+/* ── EDIT ENTRY PANEL ── */
+#edit-panel{border:2px solid var(--warn);}
+#edit-panel .panel-head{border-color:var(--warn);}
+#edit-panel .panel-title{color:var(--warn);}
+.edit-id{font-size:8px;letter-spacing:1px;color:var(--dim);font-family:var(--mono);}
+.edit-field{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
+.edit-field label{font-size:9px;letter-spacing:1.5px;color:var(--muted);}
+.edit-input{
+  background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:var(--r);padding:9px 10px;font-size:12px;font-family:var(--disp);
+  letter-spacing:.5px;outline:none;caret-color:var(--lcd);width:100%;
+}
+.edit-input:focus{border-color:var(--warn);border-width:2px;}
+.edit-select{
+  background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:var(--r);padding:8px 10px;font-size:11px;font-family:var(--disp);
+  letter-spacing:.5px;outline:none;width:100%;cursor:pointer;
+}
+.edit-select:focus{border-color:var(--warn);}
+.edit-section{
+  background:var(--panel2);border:1px solid var(--bsoft);border-radius:var(--r);
+  padding:9px;display:flex;flex-direction:column;gap:8px;margin-bottom:9px;
+}
+.edit-section-title{font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:2px;}
+.edit-row{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;font-size:10px;}
+.edit-row label{color:var(--muted);letter-spacing:1.5px;font-size:9px;}
+.edit-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;}
+.edit-actions .key{flex:1;min-width:80px;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--panel2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -793,6 +823,71 @@ button{cursor:pointer;}
       <button class="key key-green" id="btn-confirm">CONFIRMAR</button>
       <button class="key" id="btn-edit">EDITAR</button>
       <button class="key key-red" id="btn-cancel">CANCELAR</button>
+    </div>
+  </section>
+
+
+  <!-- EDIT ENTRY PANEL -->
+  <section class="panel hidden" id="edit-panel">
+    <div class="panel-head">
+      <span class="panel-title">EDITANDO REGISTRO</span>
+      <span class="panel-sub edit-id" id="edit-entry-id"></span>
+    </div>
+    <div class="edit-section">
+      <div class="edit-field">
+        <label>TÍTULO</label>
+        <input class="edit-input" id="edit-title" type="text" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="edit-field">
+        <label>MÓDULO</label>
+        <select class="edit-select" id="edit-module">
+          <option value="gastos">GASTOS</option>
+          <option value="compra">COMPRA</option>
+          <option value="mascotas">MASCOTAS</option>
+          <option value="limpieza">LIMPIEZA</option>
+          <option value="citas">CITAS</option>
+          <option value="hogar">HOGAR</option>
+          <option value="general">GENERAL</option>
+        </select>
+      </div>
+    </div>
+    <div class="edit-section" id="edit-fin-section">
+      <div class="edit-section-title">DATOS FINANCIEROS</div>
+      <div class="edit-field">
+        <label>CATEGORÍA</label>
+        <select class="edit-select" id="edit-category">
+          <option value="alimentacion">Alimentación</option>
+          <option value="restauracion">Restauración</option>
+          <option value="ocio">Ocio</option>
+          <option value="hogar-exp">Hogar</option>
+          <option value="limpieza-exp">Limpieza</option>
+          <option value="mascotas-exp">Mascotas</option>
+          <option value="transporte">Transporte</option>
+          <option value="salud">Salud</option>
+          <option value="ingresos">Ingresos</option>
+          <option value="general-exp">General</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>IMPORTE (€)</label>
+        <input class="edit-input" id="edit-amount" type="number" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="edit-row">
+        <label>ÁMBITO</label>
+        <div class="fin-opts" id="edit-scope-opts"></div>
+      </div>
+      <div class="edit-row">
+        <label>PROPIETARIO</label>
+        <div class="fin-opts" id="edit-owner-opts"></div>
+      </div>
+      <div class="edit-row">
+        <label>ESTADO</label>
+        <div class="fin-opts" id="edit-status-opts"></div>
+      </div>
+    </div>
+    <div class="edit-actions">
+      <button class="key key-green" id="btn-save-edit">GUARDAR CAMBIOS</button>
+      <button class="key key-red" id="btn-cancel-edit">CANCELAR EDICIÓN</button>
     </div>
   </section>
 
@@ -1252,7 +1347,9 @@ const AppState = {
   voiceMode:'idle',isListening:false,recognition:null,
   lastTranscript:'',speechSupported:false,speechSynthesisSupported:false,
   device:detectDevice(),theme:'light',
-  pendingEditId:null   /* id of entry being edited, null = new entry */
+  pendingEditId:null,   /* legacy — kept for compatibility */
+  editingEntryId:null,  /* id of entry currently in edit panel */
+  editingEntryOriginal:null /* snapshot before edits */
 };
 
 /* ─── UTILS ─── */
@@ -2100,6 +2197,16 @@ function renderModules(){
   });
 }
 
+
+/* ─── STATUS LABEL HELPER ─── */
+function entryStatusLabel(entry){
+  if(!entry) return {cls:'open',lbl:'PENDIENTE'};
+  if(entry.status==='done') return {cls:'done',lbl:'HECHO'};
+  const fin=entry.metadata&&entry.metadata.financialStatus;
+  if(fin==='planned') return {cls:'planned',lbl:'PLANIFICADO'};
+  if(fin==='confirmed') return {cls:'done',lbl:'CONFIRMADO'};
+  return {cls:'open',lbl:'PENDIENTE'};
+}
 /* ─── EDIT / DELETE ENTRIES ─── */
 
 /* recalculateBudgetsFromEntries — alias for recomputeBudgetTotals.
@@ -2150,35 +2257,153 @@ function deleteEntry(entryId){
   showToast('REGISTRO ELIMINADO');
 }
 
-/* editEntry(entryId) — load entry into intake panel for editing */
-function editEntry(entryId){
+/* startEditEntry(entryId) — open edit panel with entry fields directly editable.
+   This is a DIRECT EDIT, not a re-parse. The entry is identified by id and
+   updated in-place. No new entry is created. */
+function startEditEntry(entryId){
   closeEntryActions();
   const entry=AppState.entries.find(e=>e.id===entryId);
-  if(!entry) return;
-  /* Only the visible owner can edit */
+  if(!entry){showToast('REGISTRO NO ENCONTRADO','td');return;}
   if(!canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
-  /* Cancel any current pending */
+
+  /* Cancel any active intake */
   if(AppState.pendingEntry) cancelPendingEntry();
-  /* Put raw text back into input */
-  const inp=q('txt-input');if(inp){inp.value=entry.rawInput||entry.title||'';inp.focus();}
-  /* Re-run intake to populate interpretation panel */
-  const{entry:newEntry,expResult}=UniversalIntake.receive({
-    source:'manual',user:AppState.currentUser,
-    rawInput:entry.rawInput||entry.title||'',
-    inputType:'text',location:entry.location,
-    device:AppState.device,createdAt:now()
-  });
-  /* Override with the saved values so the panel shows the real data */
-  newEntry.id=entry.id;
-  newEntry.amount=entry.amount;
-  newEntry.module=entry.module;
-  newEntry.title=entry.title;
-  newEntry.status=entry.status;
-  if(entry.metadata) newEntry.metadata={...entry.metadata};
-  AppState.pendingEditId=entry.id;
-  renderInterpretationPanel(newEntry,expResult);
-  showToast('EDITANDO REGISTRO · MODIFICA Y CONFIRMA');
+
+  /* Snapshot original for cancel */
+  AppState.editingEntryId=entryId;
+  AppState.editingEntryOriginal=JSON.parse(JSON.stringify(entry));
+
+  /* Populate edit panel fields */
+  const md=entry.metadata||{};
+  q('edit-entry-id').textContent='ID: '+entryId;
+  q('edit-title').value=entry.title||'';
+  q('edit-module').value=entry.module||'gastos';
+  q('edit-amount').value=entry.amount!=null?entry.amount:'';
+  q('edit-category').value=md.category||'general-exp';
+
+  /* Show/hide fin section */
+  const isF=isFinancialEntry(entry);
+  const finSec=q('edit-fin-section');
+  if(finSec) finSec.style.display=isF?'':'none';
+
+  /* Scope / owner / status pickers */
+  renderEditPickers(md.financialScope||'shared', md.owner||'shared', md.financialStatus||'confirmed');
+
+  /* Show panel, scroll to it */
+  const panel=q('edit-panel');
+  if(panel){
+    panel.classList.remove('hidden');
+    panel.style.borderColor='var(--warn)';
+    setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),50);
+  }
+  showToast('EDITANDO · MODIFICA Y GUARDA');
 }
+
+/* Backwards compat alias — editEntry now calls startEditEntry */
+function editEntry(entryId){ startEditEntry(entryId); }
+
+function renderEditPickers(scope, owner, status){
+  /* Scope */
+  const so=q('edit-scope-opts');
+  if(so){
+    so.innerHTML='';
+    [{k:'personal',l:'PERSONAL'},{k:'shared',l:'COMÚN'}].forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(scope===opt.k?' selected':'');
+      b.textContent=opt.l;
+      b.addEventListener('click',()=>{
+        const newScope=opt.k;
+        const newOwner=newScope==='shared'?'shared':AppState.currentUser;
+        renderEditPickers(newScope,newOwner,status);
+      });
+      so.appendChild(b);
+    });
+  }
+  /* Owner */
+  const oo=q('edit-owner-opts');
+  if(oo){
+    oo.innerHTML='';
+    const isShared=scope==='shared';
+    AppState.users.forEach(u=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(owner===u.id?' selected':'')+(isShared?' muted':'');
+      b.textContent=u.name.toUpperCase();
+      b.disabled=isShared;
+      b.addEventListener('click',()=>{if(!isShared)renderEditPickers(scope,u.id,status);});
+      oo.appendChild(b);
+    });
+    const bs=document.createElement('button');
+    bs.className='fin-opt'+(owner==='shared'?' selected':'');
+    bs.textContent='COMÚN';
+    bs.addEventListener('click',()=>renderEditPickers('shared','shared',status));
+    oo.appendChild(bs);
+  }
+  /* Status */
+  const sto=q('edit-status-opts');
+  if(sto){
+    sto.innerHTML='';
+    [{k:'confirmed',l:'CONFIRMADO',w:false},{k:'planned',l:'PLANIFICADO',w:true}].forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='fin-opt'+(opt.w?' warn':'')+(status===opt.k?' selected':'');
+      b.textContent=opt.l;
+      b.addEventListener('click',()=>renderEditPickers(scope,owner,opt.k));
+      sto.appendChild(b);
+    });
+  }
+}
+
+/* saveEditedEntry — read fields from edit panel, update entry in-place */
+function saveEditedEntry(){
+  const entryId=AppState.editingEntryId;
+  if(!entryId){showToast('NADA QUE GUARDAR','tw');return;}
+  const idx=AppState.entries.findIndex(e=>e.id===entryId);
+  if(idx===-1){showToast('REGISTRO NO ENCONTRADO','td');cancelEditEntry();return;}
+
+  const entry=AppState.entries[idx];
+
+  /* Read fields */
+  const newTitle=(q('edit-title').value||'').trim()||entry.title;
+  const newModule=q('edit-module').value||entry.module;
+  const newAmtRaw=q('edit-amount').value;
+  const newAmt=newAmtRaw!==''&&newAmtRaw!=null?parseFloat(String(newAmtRaw).replace(',','.')):entry.amount;
+  const newCat=q('edit-category').value||((entry.metadata||{}).category);
+
+  /* Read pickers state from DOM */
+  const selScope=q('edit-scope-opts').querySelector('.fin-opt.selected');
+  const selOwner=q('edit-owner-opts').querySelector('.fin-opt.selected');
+  const selStatus=q('edit-status-opts').querySelector('.fin-opt.selected');
+  const newScope=selScope?selScope.dataset.k||(selScope.textContent==='COMÚN'?'shared':'personal'):(entry.metadata||{}).financialScope||'shared';
+  const newOwner=selOwner?(selOwner.textContent==='COMÚN'?'shared':selOwner.textContent.toLowerCase()):(entry.metadata||{}).owner||'shared';
+  const newStatus=selStatus?(selStatus.textContent==='PLANIFICADO'?'planned':'confirmed'):(entry.metadata||{}).financialStatus||'confirmed';
+
+  /* Apply updates */
+  entry.title=newTitle;
+  entry.module=newModule;
+  if(!isNaN(newAmt)&&newAmtRaw!=='') entry.amount=Math.round(newAmt*100)/100;
+  if(!entry.metadata) entry.metadata={};
+  entry.metadata.category=newCat;
+  entry.metadata.financialScope=newScope;
+  entry.metadata.owner=newScope==='shared'?'shared':newOwner;
+  entry.metadata.visibleTo=newScope==='shared'?['dani','patri']:[entry.metadata.owner];
+  entry.metadata.financialStatus=newStatus;
+  entry.updatedAt=now();
+
+  AppState.entries[idx]=entry;
+  saveEntries();
+  recalculateBudgetsFromEntries();
+  cancelEditEntry();
+  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
+  showToast('REGISTRO ACTUALIZADO · '+newTitle.slice(0,20));
+}
+
+/* cancelEditEntry — discard changes, close panel */
+function cancelEditEntry(){
+  AppState.editingEntryId=null;
+  AppState.editingEntryOriginal=null;
+  const panel=q('edit-panel');
+  if(panel) panel.classList.add('hidden');
+}
+
 
 /* attachSwipeHandlers — wire touch swipe on all .entry-wrap elements in list */
 function attachSwipeHandlers(list){
@@ -2208,6 +2433,73 @@ function attachSwipeHandlers(list){
   });
 }
 
+
+/* ─── REUSABLE ENTRY ROW ─── */
+/* Builds a .entry-wrap div with swipe actions for any visible entry.
+   Used by renderEntryLog() and renderModuleDashboard() entry list. */
+function buildEntryRow(e){
+  const mod=e.module||'general';
+  let color=getModuleColor(mod);
+  let badgeLabel=getModuleLabel(mod);
+  if(mod==='gastos'&&e.metadata&&e.metadata.category){
+    color=getCatColor(e.metadata.category);
+    badgeLabel=getCatLabel(e.metadata.category);
+  }
+  const md=e.metadata||{};
+  const isPlanned=md.financialStatus==='planned';
+  const isShared=md.financialScope==='shared';
+  const ownerTag=md.owner&&md.owner!=='shared'?md.owner.toUpperCase():'';
+  const meta=e.amount!=null?((md.category==='ingresos'?'+':'')+e.amount.toFixed(2)+'€'+(isPlanned?' · PLAN':'')):'';
+  const nfcTag=e.location&&CONTEXTS[e.location]?' · '+CONTEXTS[e.location].name:'';
+  const sl=entryStatusLabel(e);
+
+  const wrap=document.createElement('div');
+  wrap.className='entry-wrap';
+  wrap.setAttribute('data-entry-id',e.id);
+
+  /* Actions panel */
+  const acts=document.createElement('div');acts.className='entry-actions';
+  const btnEdit=document.createElement('button');btnEdit.className='entry-act-edit';
+  btnEdit.innerHTML='✎<span>EDITAR</span>';
+  btnEdit.setAttribute('aria-label','Editar registro');
+  btnEdit.addEventListener('click',()=>startEditEntry(e.id));
+  const btnDel=document.createElement('button');btnDel.className='entry-act-del';
+  btnDel.innerHTML='✕<span>BORRAR</span>';
+  btnDel.setAttribute('aria-label','Borrar registro');
+  btnDel.addEventListener('click',()=>confirmDeleteEntry(e.id));
+  acts.appendChild(btnEdit);acts.appendChild(btnDel);
+
+  const row=document.createElement('div');row.className='entry-row';
+  row.style.cssText='--entry-color:'+color+';';
+  row.innerHTML='<div class="entry-bar" aria-hidden="true"></div>'
+    +'<div class="entry-time">'+fmtTime(e.createdAt)+'</div>'
+    +'<div class="entry-body">'
+      +'<div class="entry-title" title="'+esc(e.title)+'">'+esc(e.title)+'</div>'
+      +'<div class="entry-meta">'
+        +'<span class="category-badge" style="--entry-color:'+color+'">'+esc(badgeLabel)+'</span>'
+        +(meta?'<span class="entry-amount">'+esc(meta)+'</span>':'')
+        +(ownerTag?'<span class="entry-nfc">· '+esc(ownerTag)+'</span>':'')
+        +(isShared&&e.amount!=null?'<span class="entry-nfc">· COMÚN</span>':'')
+        +(nfcTag?'<span class="entry-nfc">'+esc(nfcTag)+'</span>':'')
+      +'</div>'
+    +'</div>'
+    +'<div class="entry-right" style="display:flex;align-items:center;gap:4px;">'
+      +'<span class="status-badge '+sl.cls+'">'+sl.lbl+'</span>'
+      +'<button class="entry-menu-btn" aria-label="Acciones" title="Acciones">···</button>'
+    +'</div>';
+
+  row.querySelector('.entry-menu-btn').addEventListener('click',ev=>{
+    ev.stopPropagation();
+    openEntryActions(e.id);
+  });
+  row.addEventListener('click',ev=>{
+    if(wrap.classList.contains('swiped')){ev.stopPropagation();closeEntryActions();}
+  });
+
+  wrap.appendChild(acts);
+  wrap.appendChild(row);
+  return wrap;
+}
 /* ─── RENDER: LOG ─── */
 function renderEntryLog(){
   const list=q('log-list');
@@ -2221,77 +2513,9 @@ function renderEntryLog(){
   list.innerHTML='';
   if(n===0){list.innerHTML='<div class="log-empty">— SIN ENTRADAS VISIBLES · REGISTRA ALGO —</div>';return;}
   visible.slice(-18).reverse().forEach(e=>{
-    const mod=e.module||'general';
-    let color=getModuleColor(mod);
-    let badgeLabel=getModuleLabel(mod);
-    if(mod==='gastos'&&e.metadata&&e.metadata.category){
-      color=getCatColor(e.metadata.category);
-      badgeLabel=getCatLabel(e.metadata.category);
-    }
-    const md=e.metadata||{};
-    const isPlanned=md.financialStatus==='planned';
-    const isShared=md.financialScope==='shared';
-    const ownerTag=md.owner&&md.owner!=='shared'?md.owner.toUpperCase():'';
-    const meta=e.amount!=null?((md.category==='ingresos'?'+':'')+e.amount.toFixed(2)+'€'+(isPlanned?' · PLAN':'')):'';
-    const nfcTag=e.location&&CONTEXTS[e.location]?' · '+CONTEXTS[e.location].name:'';
-
-    /* Wrap = swipe container */
-    const wrap=document.createElement('div');
-    wrap.className='entry-wrap';
-    wrap.setAttribute('data-entry-id',e.id);
-
-    /* Actions panel (revealed on swipe) */
-    const acts=document.createElement('div');acts.className='entry-actions';
-    const btnEdit=document.createElement('button');btnEdit.className='entry-act-edit';
-    btnEdit.innerHTML='✎<span>EDITAR</span>';
-    btnEdit.setAttribute('aria-label','Editar registro');
-    btnEdit.addEventListener('click',()=>editEntry(e.id));
-    const btnDel=document.createElement('button');btnDel.className='entry-act-del';
-    btnDel.innerHTML='✕<span>BORRAR</span>';
-    btnDel.setAttribute('aria-label','Borrar registro');
-    btnDel.addEventListener('click',()=>confirmDeleteEntry(e.id));
-    acts.appendChild(btnEdit);acts.appendChild(btnDel);
-
-    /* Row */
-    const row=document.createElement('div');row.className='entry-row';
-    row.style.cssText='--entry-color:'+color+';';
-    row.innerHTML='<div class="entry-bar" aria-hidden="true"></div>'
-      +'<div class="entry-time">'+fmtTime(e.createdAt)+'</div>'
-      +'<div class="entry-body">'
-        +'<div class="entry-title" title="'+esc(e.title)+'">'+esc(e.title)+'</div>'
-        +'<div class="entry-meta">'
-          +'<span class="category-badge" style="--entry-color:'+color+'">'+esc(badgeLabel)+'</span>'
-          +(meta?'<span class="entry-amount">'+esc(meta)+'</span>':'')
-          +(ownerTag?'<span class="entry-nfc">· '+esc(ownerTag)+'</span>':'')
-          +(isShared&&e.amount!=null?'<span class="entry-nfc">· COMÚN</span>':'')
-          +(nfcTag?'<span class="entry-nfc">'+esc(nfcTag)+'</span>':'')
-        +'</div>'
-      +'</div>'
-      +'<div class="entry-right" style="display:flex;align-items:center;gap:4px;">'
-        +'<span class="status-badge '+(e.status==='done'?'done':'open')+'">'+(e.status==='done'?'HECHO':'PEND.')+'</span>'
-        +'<button class="entry-menu-btn" aria-label="Acciones" title="Acciones">···</button>'
-      +'</div>';
-
-    /* Menu button (···) — fallback for non-swipe */
-    row.querySelector('.entry-menu-btn').addEventListener('click',ev=>{
-      ev.stopPropagation();
-      openEntryActions(e.id);
-    });
-
-    /* Tap on row body closes actions if open */
-    row.addEventListener('click',ev=>{
-      if(wrap.classList.contains('swiped')){ev.stopPropagation();closeEntryActions();}
-    });
-
-    wrap.appendChild(acts);
-    wrap.appendChild(row);
-    list.appendChild(wrap);
+    list.appendChild(buildEntryRow(e));
   });
-
-  /* Attach touch swipe handlers */
   attachSwipeHandlers(list);
-
-  /* Close actions when tapping outside */
   list._outsideHandler && document.removeEventListener('click',list._outsideHandler);
   list._outsideHandler=()=>closeEntryActions();
   document.addEventListener('click',list._outsideHandler,{once:true});
@@ -2384,24 +2608,10 @@ function renderModuleDashboard(key){
   const lw=q('d-list');lw.innerHTML='';
   const recent=all.slice(-24).reverse();
   if(!recent.length){lw.innerHTML='<div class="log-empty">— SIN ENTRADAS —</div>';}
-  else recent.forEach(e=>{
-    const mod=e.module||'general';
-    let color=getModuleColor(mod);let badgeLabel=getModuleLabel(mod);
-    if(mod==='gastos'&&e.metadata&&e.metadata.category){
-      color=getCatColor(e.metadata.category);badgeLabel=getCatLabel(e.metadata.category);
-    }
-    const meta=e.amount!=null?e.amount.toFixed(2)+'€':'';
-    const row=document.createElement('div');row.className='entry-row';
-    row.style.cssText='--entry-color:'+color+';';
-    row.innerHTML='<div class="entry-bar" aria-hidden="true"></div>'
-      +'<div class="entry-time">'+fmtTime(e.createdAt)+'</div>'
-      +'<div class="entry-body"><div class="entry-title">'+esc(e.title)+'</div>'
-        +'<div class="entry-meta"><span class="category-badge" style="--entry-color:'+color+'">'+esc(badgeLabel)+'</span>'
-        +(meta?'<span class="entry-amount">'+esc(meta)+'</span>':'')+'</div>'
-      +'</div>'
-      +'<div class="entry-right"><span class="status-badge '+(e.status==='done'?'done':'open')+'">'+(e.status==='done'?'HECHO':'PEND.')+'</span></div>';
-    lw.appendChild(row);
-  });
+  else{
+    recent.forEach(e=>{lw.appendChild(buildEntryRow(e));});
+    attachSwipeHandlers(lw);
+  }
   q('mod-drawer-bg').classList.remove('hidden');
 }
 
@@ -2689,6 +2899,8 @@ function wireEvents(){
   q('btn-wipe').addEventListener('click',doWipe);
   q('btn-theme-light').addEventListener('click',()=>{applyTheme('light');showToast('TEMA CLARO');});
   q('btn-theme-dark').addEventListener('click',()=>{applyTheme('dark');showToast('TEMA OSCURO');});
+  q('btn-save-edit').addEventListener('click',saveEditedEntry);
+  q('btn-cancel-edit').addEventListener('click',cancelEditEntry);
 }
 
 /* ─── INIT ─── */

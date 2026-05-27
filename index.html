@@ -383,6 +383,8 @@ button{cursor:pointer;}
 .status-badge.open{color:var(--warn);border-color:var(--warn);}
 .status-badge.done{color:var(--lcd);border-color:var(--lcd);}
 .status-badge.planned{color:var(--warn);border-color:var(--warn);}
+.status-badge.confirmed{color:var(--lcd);border-color:var(--lcd);}
+.status-badge.pending{color:var(--muted);border-color:var(--muted);}
 .log-empty{text-align:center;color:var(--muted);padding:20px;font-size:11px;letter-spacing:2px;}
 
 /* ── CONFIDENCE BADGE ── */
@@ -410,7 +412,7 @@ button{cursor:pointer;}
 .section-lbl{font-size:9px;letter-spacing:2px;color:var(--muted);border-bottom:1px dashed var(--bsoft);padding-bottom:4px;margin-bottom:7px;}
 .drawer-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
 .drawer-actions{display:flex;flex-wrap:wrap;gap:6px;}
-.drawer-list{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;}
+.drawer-list{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;overflow-x:visible;}
 .drawer-mod-header{
   display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--r);
   background:var(--panel2);border-left:4px solid var(--module-color,var(--lcd));
@@ -2198,14 +2200,40 @@ function renderModules(){
 }
 
 
-/* ─── STATUS LABEL HELPER ─── */
+/* ─── STATUS LABEL HELPERS ─── */
+/* getEntryStatusLabel / getEntryStatusClass
+   PRIORIDAD para entradas financieras:
+   1. metadata.financialStatus === 'confirmed' → CONFIRMADO
+   2. metadata.financialStatus === 'planned'   → PLANIFICADO
+   3. entry.status === 'done'                  → HECHO
+   4. fallback                                 → PENDIENTE
+   Para entradas NO financieras manda entry.status. */
+function getEntryStatusLabel(entry){
+  if(!entry) return 'PENDIENTE';
+  const fin=(entry.metadata||{}).financialStatus||null;
+  const financial=isFinancialEntry(entry);
+  /* Financial: financialStatus wins */
+  if(financial){
+    if(fin==='confirmed') return 'CONFIRMADO';
+    if(fin==='planned')   return 'PLANIFICADO';
+  }
+  if(entry.status==='done') return 'HECHO';
+  return 'PENDIENTE';
+}
+function getEntryStatusClass(entry){
+  if(!entry) return 'pending';
+  const fin=(entry.metadata||{}).financialStatus||null;
+  const financial=isFinancialEntry(entry);
+  if(financial){
+    if(fin==='confirmed') return 'confirmed';
+    if(fin==='planned')   return 'planned';
+  }
+  if(entry.status==='done') return 'done';
+  return 'pending';
+}
+/* Legacy alias used by buildEntryRow */
 function entryStatusLabel(entry){
-  if(!entry) return {cls:'open',lbl:'PENDIENTE'};
-  if(entry.status==='done') return {cls:'done',lbl:'HECHO'};
-  const fin=entry.metadata&&entry.metadata.financialStatus;
-  if(fin==='planned') return {cls:'planned',lbl:'PLANIFICADO'};
-  if(fin==='confirmed') return {cls:'done',lbl:'CONFIRMADO'};
-  return {cls:'open',lbl:'PENDIENTE'};
+  return {cls:getEntryStatusClass(entry), lbl:getEntryStatusLabel(entry)};
 }
 /* ─── EDIT / DELETE ENTRIES ─── */
 

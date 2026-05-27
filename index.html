@@ -1336,56 +1336,75 @@ function getOtherUserId(){
    browser devtools can read all entries from localStorage. Real
    security will come with Supabase Row Level Security + Auth.
    ──────────────────────────────────────────────────────────── */
-function canCurrentUserSeeEntry(entry){
+
+/* isFinancialEntry — devuelve true si la entrada involucra dinero.
+   Solo las entradas financieras aplican la regla de privacidad personal.
+   El resto (compra, mascotas, limpieza, citas, hogar) son domésticas
+   compartidas por defecto y visibles para todos los usuarios del hogar. */
+function isFinancialEntry(entry){
   if(!entry) return false;
+  if(entry.module==='gastos') return true;
+  if(entry.amount!=null) return true;
   const md=entry.metadata||{};
-  const cu=AppState.currentUser;
-
-  /* Backward compat: entries without financialScope default to shared */
-  const scope = md.financialScope || 'shared';
-
-  /* REGLA DE PRIVACIDAD — irrestricta, no hay bypass por rol:
-     - scope === 'shared'   → visible para todos
-     - scope === 'personal' → visible SOLO para el owner
-     El rol admin nunca salta esta comprobación. */
-  if(scope==='shared') return true;
-  /* personal: owner must match current user exactly */
-  const owner = md.owner || null;
-  return owner === cu;
+  if(md.movementType) return true;
+  const intent=entry.intent||'';
+  if(intent==='create_expense'||intent==='create_income') return true;
+  return false;
 }
 
-/* getVisibleEntries — filtro central de privacidad.
-   REGLA ÚNICA: scope==='shared' → visible para todos.
-                scope==='personal' → visible SOLO para owner === currentUser.
-   El rol admin NO bypasea esta regla en ninguna vista.
-   - 'mine'   → entradas personales del usuario actual + compartidas
-   - 'shared' → solo entradas compartidas
-   - 'admin'  → configuración del sistema; los datos personales siguen la regla anterior
+/* canCurrentUserSeeEntry — regla de privacidad de D-OS.
+   PRINCIPIO: D-OS es una app doméstica compartida.
+   La privacidad solo aplica a finanzas personales (gastos/ingresos con scope=personal).
+   Todo lo doméstico no financiero (compra, mascotas, limpieza, citas, hogar) es compartido.
+
+   REGLAS:
+   1. Entrada NO financiera → visible para todos (vida doméstica compartida).
+   2. Financiera con scope='shared' o owner='shared' → visible para todos.
+   3. Financiera con scope='personal' → visible SOLO para owner === currentUser.
+   4. Financiera sin scope (datos viejos) → tratar como shared (no ocultar historial).
+   El rol admin NO bypasea la regla de finanzas personales. */
+function canCurrentUserSeeEntry(entry){
+  if(!entry) return false;
+  const cu=AppState.currentUser;
+  const md=entry.metadata||{};
+
+  /* Regla 1: entradas domésticas no financieras → siempre visibles */
+  if(!isFinancialEntry(entry)) return true;
+
+  const scope=md.financialScope||null;
+  const owner=md.owner||null;
+
+  /* Regla 2: finanzas compartidas → visibles para ambos */
+  if(scope==='shared'||owner==='shared') return true;
+
+  /* Regla 3: finanzas personales → solo el owner */
+  if(scope==='personal') return owner===cu;
+
+  /* Regla 4: financiero sin scope (historial antiguo) → tratar como shared */
+  return true;
+}
+
+/* getVisibleEntries — filtro central basado en canCurrentUserSeeEntry.
+   - 'mine'   → entradas visibles para el usuario actual (personales + compartidas + no financieras)
+   - 'shared' → financieras compartidas + no financieras
+   - 'admin'  → igual que 'mine': admin técnico no accede a finanzas personales ajenas
    TODOS los renders deben llamar a esta función, nunca AppState.entries directamente. */
 function getVisibleEntries(opts){
-  opts = opts || {};
-  const view = opts.view || AppState.currentView;
-  const cu = AppState.currentUser;
+  opts=opts||{};
+  const view=opts.view||AppState.currentView;
 
   return AppState.entries.filter(e=>{
     const md=e.metadata||{};
-    const scope = md.financialScope || 'shared';
-    const owner = md.owner || 'shared';
-
-    /* Regla de privacidad — no tiene excepciones por rol */
-    const isVisible = (scope==='shared') || (scope==='personal' && owner===cu);
+    const scope=md.financialScope||null;
+    const financial=isFinancialEntry(e);
 
     if(view==='shared'){
-      /* Vista común: solo entradas explícitamente compartidas */
-      return scope==='shared';
+      /* Vista común: no financiero siempre visible; financiero solo si es shared */
+      if(!financial) return true;
+      return scope==='shared'||(md.owner||null)==='shared';
     }
-    if(view==='admin'){
-      /* Vista admin: permite ver configuración del sistema.
-         Los datos personales siguen siendo privados: solo los tuyos + compartidos. */
-      return isVisible;
-    }
-    /* 'mine' (default): mis personales + compartidos */
-    return isVisible;
+    /* 'mine' y 'admin' usan la misma regla — admin no tiene bypass financiero */
+    return canCurrentUserSeeEntry(e);
   });
 }
 

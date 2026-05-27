@@ -611,6 +611,64 @@ button{cursor:pointer;}
   .budget-stats{grid-template-columns:repeat(2,1fr);}
 }
 
+
+/* ── ENTRY ROW SWIPE / ACTIONS ── */
+.log-list{display:flex;flex-direction:column;gap:4px;}
+.entry-wrap{position:relative;overflow:hidden;border-radius:var(--r);}
+.entry-wrap .entry-row{
+  position:relative;z-index:1;
+  transition:transform .18s ease;
+  border-radius:var(--r);
+  margin:0;
+}
+.entry-wrap.swiped .entry-row{transform:translateX(-100px);}
+.entry-actions{
+  position:absolute;right:0;top:0;bottom:0;width:100px;
+  display:flex;align-items:stretch;z-index:0;border-radius:0 var(--r) var(--r) 0;
+  overflow:hidden;
+}
+.entry-act-edit{
+  flex:1;background:var(--panel3);border:none;border-left:1px solid var(--border);
+  color:var(--text-soft);font-family:var(--disp);font-size:9px;letter-spacing:1.5px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;transition:background .1s;
+}
+.entry-act-edit:hover,.entry-act-edit:active{background:var(--btn);}
+.entry-act-del{
+  flex:1;background:var(--danger);border:none;border-left:1px solid var(--danger);
+  color:#fff;font-family:var(--disp);font-size:9px;letter-spacing:1.5px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;transition:opacity .1s;
+}
+.entry-act-del:hover,.entry-act-del:active{opacity:.85;}
+.entry-menu-btn{
+  background:transparent;border:none;color:var(--dim);font-size:13px;
+  padding:0 5px;cursor:pointer;line-height:1;height:100%;display:flex;align-items:center;
+  transition:color .1s;flex-shrink:0;
+}
+.entry-menu-btn:hover{color:var(--muted);}
+
+/* Confirm-delete inline overlay */
+.delete-confirm{
+  position:absolute;inset:0;z-index:10;
+  background:var(--panel);border:1.5px solid var(--danger);
+  border-radius:var(--r);display:flex;align-items:center;
+  justify-content:space-between;padding:0 10px;gap:8px;
+  animation:fadein .12s ease;
+}
+.delete-confirm-msg{font-size:10px;letter-spacing:1px;color:var(--text);flex:1;}
+.delete-confirm-cancel{
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  font-family:var(--disp);font-size:9px;letter-spacing:1px;
+  padding:6px 10px;border-radius:var(--r);cursor:pointer;transition:background .1s;
+}
+.delete-confirm-cancel:hover{background:var(--btnhov);}
+.delete-confirm-ok{
+  background:var(--danger);border:1px solid var(--danger);color:#fff;
+  font-family:var(--disp);font-size:9px;letter-spacing:1px;
+  padding:6px 10px;border-radius:var(--r);cursor:pointer;transition:opacity .1s;
+}
+.delete-confirm-ok:hover{opacity:.85;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--panel2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -1193,7 +1251,8 @@ const AppState = {
   currentContext:null,currentModule:'dashboard',
   voiceMode:'idle',isListening:false,recognition:null,
   lastTranscript:'',speechSupported:false,speechSynthesisSupported:false,
-  device:detectDevice(),theme:'light'
+  device:detectDevice(),theme:'light',
+  pendingEditId:null   /* id of entry being edited, null = new entry */
 };
 
 /* ─── UTILS ─── */
@@ -1346,6 +1405,7 @@ function isFinancialEntry(entry){
   if(entry.module==='gastos') return true;
   if(entry.amount!=null) return true;
   const md=entry.metadata||{};
+  if(md.amount!=null) return true;
   if(md.movementType) return true;
   const intent=entry.intent||'';
   if(intent==='create_expense'||intent==='create_income') return true;
@@ -1735,7 +1795,23 @@ function confirmPendingEntry(){
       md.visibleTo=[md.owner];
     }
   }
-  AppState.entries.push(entry);saveEntries();
+  /* UPDATE existing entry or INSERT new one */
+  if(AppState.pendingEditId){
+    const idx=AppState.entries.findIndex(x=>x.id===AppState.pendingEditId);
+    if(idx!==-1){
+      /* Preserve original id/createdAt/createdBy; update everything else */
+      entry.id=AppState.entries[idx].id;
+      entry.createdAt=AppState.entries[idx].createdAt;
+      entry.createdBy=AppState.entries[idx].createdBy;
+      AppState.entries[idx]=entry;
+    } else {
+      AppState.entries.push(entry);
+    }
+    AppState.pendingEditId=null;
+  } else {
+    AppState.entries.push(entry);
+  }
+  saveEntries();
   recomputeBudgetTotals();
   AppState.pendingEntry=null;AppState.pendingExpCat=null;
   AppState.pendingScope=null;AppState.pendingOwner=null;AppState.pendingStatus='confirmed';
@@ -2024,6 +2100,114 @@ function renderModules(){
   });
 }
 
+/* ─── EDIT / DELETE ENTRIES ─── */
+
+/* recalculateBudgetsFromEntries — alias for recomputeBudgetTotals.
+   Resets and recomputes all budget counters from AppState.entries. */
+function recalculateBudgetsFromEntries(){
+  recomputeBudgetTotals();
+}
+
+/* closeEntryActions — close any open swipe panel or delete confirm */
+function closeEntryActions(){
+  document.querySelectorAll('.entry-wrap.swiped').forEach(w=>w.classList.remove('swiped'));
+  document.querySelectorAll('.delete-confirm').forEach(el=>el.remove());
+}
+
+/* openEntryActions(entryId) — toggle swipe state on the given row */
+function openEntryActions(entryId){
+  const wrap=document.querySelector('[data-entry-id="'+entryId+'"]');
+  if(!wrap) return;
+  const already=wrap.classList.contains('swiped');
+  closeEntryActions();
+  if(!already) wrap.classList.add('swiped');
+}
+
+/* confirmDeleteEntry(entryId) — show inline confirm overlay */
+function confirmDeleteEntry(entryId){
+  closeEntryActions();
+  const wrap=document.querySelector('[data-entry-id="'+entryId+'"]');
+  if(!wrap) return;
+  /* remove any existing confirm */
+  const existing=wrap.querySelector('.delete-confirm');
+  if(existing){existing.remove();return;}
+  const ov=document.createElement('div');
+  ov.className='delete-confirm';
+  ov.innerHTML='<span class="delete-confirm-msg">¿ELIMINAR ESTE REGISTRO?</span>'
+    +'<button class="delete-confirm-cancel">CANCELAR</button>'
+    +'<button class="delete-confirm-ok">ELIMINAR</button>';
+  ov.querySelector('.delete-confirm-cancel').addEventListener('click',()=>{ov.remove();});
+  ov.querySelector('.delete-confirm-ok').addEventListener('click',()=>deleteEntry(entryId));
+  wrap.appendChild(ov);
+}
+
+/* deleteEntry(entryId) — remove from AppState, recalculate, re-render */
+function deleteEntry(entryId){
+  AppState.entries=AppState.entries.filter(e=>e.id!==entryId);
+  saveEntries();
+  recalculateBudgetsFromEntries();
+  renderTodayPanel();renderFinanzasPanel();renderModules();renderEntryLog();
+  showToast('REGISTRO ELIMINADO');
+}
+
+/* editEntry(entryId) — load entry into intake panel for editing */
+function editEntry(entryId){
+  closeEntryActions();
+  const entry=AppState.entries.find(e=>e.id===entryId);
+  if(!entry) return;
+  /* Only the visible owner can edit */
+  if(!canCurrentUserSeeEntry(entry)){showToast('SIN ACCESO A ESTE REGISTRO','td');return;}
+  /* Cancel any current pending */
+  if(AppState.pendingEntry) cancelPendingEntry();
+  /* Put raw text back into input */
+  const inp=q('txt-input');if(inp){inp.value=entry.rawInput||entry.title||'';inp.focus();}
+  /* Re-run intake to populate interpretation panel */
+  const{entry:newEntry,expResult}=UniversalIntake.receive({
+    source:'manual',user:AppState.currentUser,
+    rawInput:entry.rawInput||entry.title||'',
+    inputType:'text',location:entry.location,
+    device:AppState.device,createdAt:now()
+  });
+  /* Override with the saved values so the panel shows the real data */
+  newEntry.id=entry.id;
+  newEntry.amount=entry.amount;
+  newEntry.module=entry.module;
+  newEntry.title=entry.title;
+  newEntry.status=entry.status;
+  if(entry.metadata) newEntry.metadata={...entry.metadata};
+  AppState.pendingEditId=entry.id;
+  renderInterpretationPanel(newEntry,expResult);
+  showToast('EDITANDO REGISTRO · MODIFICA Y CONFIRMA');
+}
+
+/* attachSwipeHandlers — wire touch swipe on all .entry-wrap elements in list */
+function attachSwipeHandlers(list){
+  list.querySelectorAll('.entry-wrap').forEach(wrap=>{
+    let startX=0,startY=0,moved=false;
+    wrap.addEventListener('touchstart',e=>{
+      startX=e.touches[0].clientX;startY=e.touches[0].clientY;moved=false;
+    },{passive:true});
+    wrap.addEventListener('touchmove',e=>{
+      const dx=startX-e.touches[0].clientX;
+      const dy=Math.abs(e.touches[0].clientY-startY);
+      if(dy>dx) return; /* vertical scroll — ignore */
+      if(dx>12) moved=true;
+    },{passive:true});
+    wrap.addEventListener('touchend',e=>{
+      if(!moved) return;
+      const dx=startX-e.changedTouches[0].clientX;
+      const entryId=wrap.getAttribute('data-entry-id');
+      if(dx>40){
+        /* swipe left → open actions */
+        openEntryActions(entryId);
+      } else if(dx<-40){
+        /* swipe right → close */
+        closeEntryActions();
+      }
+    },{passive:true});
+  });
+}
+
 /* ─── RENDER: LOG ─── */
 function renderEntryLog(){
   const list=q('log-list');
@@ -2040,7 +2224,6 @@ function renderEntryLog(){
     const mod=e.module||'general';
     let color=getModuleColor(mod);
     let badgeLabel=getModuleLabel(mod);
-    /* For gastos, use category colour */
     if(mod==='gastos'&&e.metadata&&e.metadata.category){
       color=getCatColor(e.metadata.category);
       badgeLabel=getCatLabel(e.metadata.category);
@@ -2048,9 +2231,28 @@ function renderEntryLog(){
     const md=e.metadata||{};
     const isPlanned=md.financialStatus==='planned';
     const isShared=md.financialScope==='shared';
-    const ownerTag = md.owner && md.owner!=='shared' ? md.owner.toUpperCase() : '';
+    const ownerTag=md.owner&&md.owner!=='shared'?md.owner.toUpperCase():'';
     const meta=e.amount!=null?((md.category==='ingresos'?'+':'')+e.amount.toFixed(2)+'€'+(isPlanned?' · PLAN':'')):'';
     const nfcTag=e.location&&CONTEXTS[e.location]?' · '+CONTEXTS[e.location].name:'';
+
+    /* Wrap = swipe container */
+    const wrap=document.createElement('div');
+    wrap.className='entry-wrap';
+    wrap.setAttribute('data-entry-id',e.id);
+
+    /* Actions panel (revealed on swipe) */
+    const acts=document.createElement('div');acts.className='entry-actions';
+    const btnEdit=document.createElement('button');btnEdit.className='entry-act-edit';
+    btnEdit.innerHTML='✎<span>EDITAR</span>';
+    btnEdit.setAttribute('aria-label','Editar registro');
+    btnEdit.addEventListener('click',()=>editEntry(e.id));
+    const btnDel=document.createElement('button');btnDel.className='entry-act-del';
+    btnDel.innerHTML='✕<span>BORRAR</span>';
+    btnDel.setAttribute('aria-label','Borrar registro');
+    btnDel.addEventListener('click',()=>confirmDeleteEntry(e.id));
+    acts.appendChild(btnEdit);acts.appendChild(btnDel);
+
+    /* Row */
     const row=document.createElement('div');row.className='entry-row';
     row.style.cssText='--entry-color:'+color+';';
     row.innerHTML='<div class="entry-bar" aria-hidden="true"></div>'
@@ -2065,9 +2267,34 @@ function renderEntryLog(){
           +(nfcTag?'<span class="entry-nfc">'+esc(nfcTag)+'</span>':'')
         +'</div>'
       +'</div>'
-      +'<div class="entry-right"><span class="status-badge '+(e.status==='done'?'done':'open')+'">'+(e.status==='done'?'HECHO':'PEND.')+'</span></div>';
-    list.appendChild(row);
+      +'<div class="entry-right" style="display:flex;align-items:center;gap:4px;">'
+        +'<span class="status-badge '+(e.status==='done'?'done':'open')+'">'+(e.status==='done'?'HECHO':'PEND.')+'</span>'
+        +'<button class="entry-menu-btn" aria-label="Acciones" title="Acciones">···</button>'
+      +'</div>';
+
+    /* Menu button (···) — fallback for non-swipe */
+    row.querySelector('.entry-menu-btn').addEventListener('click',ev=>{
+      ev.stopPropagation();
+      openEntryActions(e.id);
+    });
+
+    /* Tap on row body closes actions if open */
+    row.addEventListener('click',ev=>{
+      if(wrap.classList.contains('swiped')){ev.stopPropagation();closeEntryActions();}
+    });
+
+    wrap.appendChild(acts);
+    wrap.appendChild(row);
+    list.appendChild(wrap);
   });
+
+  /* Attach touch swipe handlers */
+  attachSwipeHandlers(list);
+
+  /* Close actions when tapping outside */
+  list._outsideHandler && document.removeEventListener('click',list._outsideHandler);
+  list._outsideHandler=()=>closeEntryActions();
+  document.addEventListener('click',list._outsideHandler,{once:true});
 }
 
 /* ─── RENDER: MODULE DASHBOARD ─── */
